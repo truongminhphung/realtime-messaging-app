@@ -1,116 +1,260 @@
-# Messaging App
-A real-time messaging app with FastAPI, React, PostgreSQL, Redis, RabbitMQ, Docker, and Kubernetes.
+# 💬 Real-Time Messaging Application
 
-## Setup
-1. Install Docker, Python 3.9, Node.js.
-2. Run `docker-compose up` for local development.
-3. Configure AWS credentials and deploy to EKS.
+A modern, scalable real-time messaging platform built with FastAPI, React, and a robust microservices architecture. This application demonstrates enterprise-level software engineering practices with containerization, automated CI/CD, and cloud deployment capabilities.
 
-## CI/CD
-- CI: GitHub Actions builds/tests/pushes images.
-- CD: Deploys to AWS EKS.
+## 🚀 Features
 
+- **Real-time messaging** with WebSocket connections
+- **User authentication and authorization** with JWT tokens
+- **Chat rooms and direct messaging** capabilities
+- **Message persistence** with PostgreSQL
+- **High-performance caching** with Redis
+- **Asynchronous notifications** with RabbitMQ
+- **Scalable architecture** ready for production deployment
+- **Comprehensive testing** with automated CI/CD pipeline
 
-Project Structure Overview
+## 🏗️ Architecture Overview
 
-    - Monolithic Backend: Combines FastAPI (REST APIs, WebSocket events) and RabbitMQ worker logic in a single Python application.
-    - Frontend: React app for the user interface, served via Nginx.
-    - Database/Cache/Queue: PostgreSQL (persistent storage), Redis (caching, rate limiting), RabbitMQ (notifications).
-    - CI/CD: GitHub Actions for building, testing, and deploying to AWS EKS.
-    - Docker/Kubernetes: Containerize services and orchestrate with K8s.
-    - AWS: ECR, EKS, EC2, RDS, Elasticache, CloudWatch.
+### Technology Stack
 
-Project Structure
-messaging-app/
-├── .github/                                    # GitHub Actions workflows for CI/CD
-│   └── workflows/                              # CI/CD pipeline definitions
-│       ├── ci.yml                              # CI: Build, test, push Docker images
-│       └── cd.yml                              # CD: Deploy to AWS EKS
-├── backend/                                    # Monolithic FastAPI backend (API, WebSocket, worker)
-│   ├── app/                                    # Core application code
-│   │   ├── __init__.py                         # Marks app as Python package
-│   │   ├── main.py                             # FastAPI app entry point (REST, WebSocket)
-│   │   ├── config.py                           # Configuration (env vars, DB URLs)
-│   │   ├── dependencies.py                     # Dependency injection (e.g., DB session, JWT)
-│   │   ├── models/                             # Pydantic and SQLAlchemy models
-│   │   │   ├── __init__.py                     # Package marker
-│   │   │   ├── user.py                         # User model (Pydantic, SQLAlchemy)
-│   │   │   ├── chat_room.py                    # Chat room model
-│   │   │   ├── room_participant.py             # Room participant model
-│   │   │   ├── message.py                      # Message model
-│   │   │   ├── notification.py                 # Notification model
-│   │   ├── routes/                             # API route handlers
-│   │   │   ├── __init__.py                     # Package marker
-│   │   │   ├── auth.py                         # Auth endpoints (/register, /login, /logout)
-│   │   │   ├── users.py                        # User profile endpoints (/profile)
-│   │   │   ├── rooms.py                        # Room endpoints (/rooms, /rooms/{id}/...)
-│   │   │   ├── messages.py                      # Message history endpoint (/rooms/{id}/messages)
-│   │   │   ├── notifications.py                # Notification endpoint (/notifications)
-│   │   ├── websocket/                          # WebSocket event handlers
-│   │   │   ├── __init__.py                     # Package marker
-│   │   │   ├── chat.py                         # WebSocket endpoint (/ws/{room_id})
-│   │   ├── services/                           # Business logic and external service integrations
-│   │   │   ├── __init__.py                     # Package marker
-│   │   │   ├── database.py                     # Database session management
-│   │   │   ├── redis.py                        # Redis client (cache, rate limiting)
-│   │   │   ├── rabbitmq.py                     # RabbitMQ client (notification tasks)
-│   │   │   ├── auth.py                         # JWT generation/validation
-│   │   │   ├── notification_worker.py           # RabbitMQ worker logic (email sending)
-│   │   ├── migrations/                         # Database migrations (Alembic)
-│   │   │   ├── env.py                          # Alembic configuration
-│   │   │   ├── script.py.mako                  # Migration script template
-│   │   │   ├── versions/                       # Migration scripts
-│   │   │       └── (empty initially)            # Placeholder for migration files
-│   ├── tests/                                  # Unit and integration tests
-│   │   ├── __init__.py                         # Package marker
-│   │   ├── conftest.py                         # Pytest fixtures (e.g., TestClient, DB)
-│   │   ├── test_auth.py                        # Tests for auth endpoints
-│   │   ├── test_users.py                       # Tests for user profile endpoints
-│   │   ├── test_rooms.py                       # Tests for room endpoints
-│   │   ├── test_messages.py                    # Tests for message endpoints
-│   │   ├── test_notifications.py               # Tests for notification endpoints
-│   │   ├── test_websocket.py                   # Tests for WebSocket events
-│   ├── Dockerfile                              # Docker image (Python 3.12)
-│   ├── pyproject.toml                          # Dependencies (redis-py, Python 3.12)
-│   ├── uv.lock                                 # Lock file
-│   ├── alembic.ini                             # Alembic configuration
-├── frontend/                                   # React frontend
-│   ├── public/                                 # Static assets
-│   │   ├── index.html                          # HTML entry point
-│   │   ├── favicon.ico                         # Favicon
-│   │   ├── manifest.json                       # Web app manifest
-│   ├── src/                                    # React source code
-│   │   ├── App.js                              # Main React component
-│   │   ├── index.js                            # React app entry point
-│   │   ├── components/                         # Reusable UI components
-│   │   │   ├── Login.js                        # Login form
-│   │   │   ├── Register.js                     # Registration form
-│   │   │   ├── RoomList.js                     # List of chat rooms
-│   │   │   ├── Room.js                         # Chat room UI
-│   │   │   ├── MessageList.js                  # Message display
-│   │   │   ├── NotificationList.js             # Notification display
-│   │   ├── hooks/                              # Custom React hooks
-│   │   │   ├── useAuth.js                      # Authentication state
-│   │   │   ├── useWebSocket.js                 # WebSocket connection
-│   │   ├── utils/                              # Utility functions
-│   │   │   ├── api.js                          # API client (axios)
-│   │   │   ├── websocket.js                    # WebSocket client
-│   ├── tests/                                  # Frontend tests
-│   │   ├── App.test.js                         # Tests for App component
-│   │   ├── Login.test.js                       # Tests for Login component
-│   │   ├── Register.test.js                    # Tests for Register component
-│   ├── Dockerfile                              # Docker image for frontend
-│   ├── package.json                            # Node dependencies and scripts
-│   ├── .eslintrc.json                          # ESLint configuration
-│   ├── .prettierrc                             # Prettier configuration
-├── k8s/                                        # Kubernetes manifests
-│   ├── backend-deployment.yaml                 # Backend deployment and service
-│   ├── frontend-deployment.yaml                # Frontend deployment and service
-│   ├── nginx-ingress.yaml                     # Nginx Ingress for routing
-│   ├── secrets.yaml                           # K8s secrets (DB, Redis, RabbitMQ URLs)
-│   ├── rabbitmq-deployment.yaml                # RabbitMQ deployment (since no AWS MQ in Free Tier)
-├── .gitignore                                  # Files to ignore in Git
-├── docker-compose.yml                          # Local development with Docker
-├── README.md                                   # Project documentation
-├── LICENSE                                     # Project license (e.g., MIT)
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Backend API** | FastAPI + Python 3.12 | REST API & WebSocket server |
+| **Frontend** | React + JavaScript | User interface |
+| **Database** | PostgreSQL 13 | Primary data storage |
+| **Cache** | Redis 6 | Session management & caching |
+| **Message Queue** | RabbitMQ 3 | Asynchronous task processing |
+| **Package Manager** | uv | Fast Python dependency management |
+| **Database Migrations** | Alembic | Schema version control |
+
+### System Architecture
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Frontend  │────│   Backend   │────│ PostgreSQL  │
+│   (React)   │    │  (FastAPI)  │    │ (Database)  │
+└─────────────┘    └─────────────┘    └─────────────┘
+                           │                    │
+                   ┌───────┴───────┐    ┌───────┴───────┐
+                   │     Redis     │    │   RabbitMQ    │
+                   │   (Cache)     │    │  (Queue)      │
+                   └───────────────┘    └───────────────┘
+```
+
+## 📁 Project Structure
+
+```
+realtime-messaging-app/
+├── backend/                 # FastAPI backend application
+│   ├── app/
+│   │   ├── models/         # SQLAlchemy database models
+│   │   ├── routes/         # API route handlers
+│   │   ├── services/       # Business logic services
+│   │   ├── websocket/      # WebSocket handlers
+│   │   └── migrations/     # Alembic database migrations
+│   ├── tests/              # Backend test suite
+│   └── pyproject.toml      # Python dependencies
+├── frontend/               # React frontend application
+│   ├── src/                # React source code
+│   ├── public/             # Static assets
+│   └── package.json        # Node.js dependencies
+├── k8s/                    # Kubernetes deployment manifests
+├── docker-compose.yml      # Local development environment
+└── .github/workflows/      # CI/CD pipeline configuration
+```
+
+## 🛠️ Development Setup
+
+### Prerequisites
+
+- **Docker** & **Docker Compose** (for containerized development)
+- **Python 3.12+** (for local backend development)
+- **Node.js 18+** (for local frontend development)
+- **Git** (for version control)
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd realtime-messaging-app
+   ```
+
+2. **Start all services with Docker Compose**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
+
+### Local Development
+
+#### Backend Development
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install dependencies using uv
+uv sync --extra dev
+
+# Set up environment variables
+source env.sh
+
+# Run database migrations
+uv run alembic upgrade head
+
+# Start development server
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Frontend Development
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+```
+
+#### Running Tests
+
+```bash
+# Backend tests
+cd backend
+uv run pytest --cov=app tests/
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+## 🗄️ Database Management
+
+This project uses Alembic for database schema management:
+
+```bash
+# Create a new migration
+cd backend
+uv run alembic revision --autogenerate -m "Description of changes"
+
+# Apply migrations
+uv run alembic upgrade head
+
+# Check current migration status
+uv run alembic current
+
+# View migration history
+uv run alembic history
+```
+
+## 🚢 Deployment
+
+### Docker Deployment
+
+Build and run with Docker Compose:
+
+```bash
+# Production build
+docker-compose -f docker-compose.yml up --build -d
+
+# View logs
+docker-compose logs -f
+```
+
+### Kubernetes Deployment
+
+Deploy to Kubernetes cluster:
+
+```bash
+# Apply Kubernetes manifests
+kubectl apply -f k8s/
+
+# Check deployment status
+kubectl get pods
+kubectl get services
+```
+
+### AWS EKS Deployment
+
+The application is configured for deployment to AWS EKS with:
+- **ECR** for container image registry
+- **EKS** for Kubernetes orchestration
+- **RDS** for managed PostgreSQL
+- **ElastiCache** for managed Redis
+- **CloudWatch** for monitoring and logging
+
+## 🔧 CI/CD Pipeline
+
+The project includes a comprehensive GitHub Actions workflow:
+
+- **Continuous Integration**
+  - Automated testing for backend and frontend
+  - Code coverage reporting
+  - Security vulnerability scanning
+  - Code quality checks
+
+- **Continuous Deployment**
+  - Automated Docker image building
+  - Container registry publishing
+  - Deployment to staging/production environments
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow Python PEP 8 style guide for backend code
+- Use ESLint and Prettier for frontend code formatting
+- Write comprehensive tests for new features
+- Update documentation for API changes
+- Ensure all CI checks pass before submitting PR
+
+## 📝 API Documentation
+
+Interactive API documentation is available at:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## 🔒 Security
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Input validation and sanitization
+- CORS configuration
+- Rate limiting with Redis
+
+## 📊 Monitoring & Observability
+
+- Application metrics with Prometheus
+- Distributed tracing with OpenTelemetry
+- Centralized logging with structured JSON logs
+- Health checks for all services
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙋‍♂️ Support
+
+For questions, issues, or contributions, please:
+- Open an issue in the GitHub repository
+- Check the documentation in the `/docs` directory
+- Review existing issues and discussions
+
+---
+
+**Built with ❤️ using modern web technologies**
 

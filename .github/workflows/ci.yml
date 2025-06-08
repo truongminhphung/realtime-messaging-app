@@ -77,7 +77,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           cd backend
-          uv sync --extra dev
+          uv sync
 
       - name: Run Python tests
         run: |

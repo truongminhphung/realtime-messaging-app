@@ -64,7 +64,7 @@ jobs:
           cache: 'pip'
 
       - name: Install uv
-        run: pip install uv
+        run: pip install uv --extra dev
 
       - name: Cache uv dependencies
         uses: actions/cache@v3

@@ -1,3 +1,16 @@
+# Messaging App
+A real-time messaging app with FastAPI, React, PostgreSQL, Redis, RabbitMQ, Docker, and Kubernetes.
+
+## Setup
+1. Install Docker, Python 3.9, Node.js.
+2. Run `docker-compose up` for local development.
+3. Configure AWS credentials and deploy to EKS.
+
+## CI/CD
+- CI: GitHub Actions builds/tests/pushes images.
+- CD: Deploys to AWS EKS.
+
+
 Project Structure Overview
 
     - Monolithic Backend: Combines FastAPI (REST APIs, WebSocket events) and RabbitMQ worker logic in a single Python application.

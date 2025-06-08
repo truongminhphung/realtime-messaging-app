@@ -1,0 +1,103 @@
+Project Structure Overview
+
+    - Monolithic Backend: Combines FastAPI (REST APIs, WebSocket events) and RabbitMQ worker logic in a single Python application.
+    - Frontend: React app for the user interface, served via Nginx.
+    - Database/Cache/Queue: PostgreSQL (persistent storage), Redis (caching, rate limiting), RabbitMQ (notifications).
+    - CI/CD: GitHub Actions for building, testing, and deploying to AWS EKS.
+    - Docker/Kubernetes: Containerize services and orchestrate with K8s.
+    - AWS: ECR, EKS, EC2, RDS, Elasticache, CloudWatch.
+
+Project Structure
+messaging-app/
+├── .github/                                    # GitHub Actions workflows for CI/CD
+│   └── workflows/                              # CI/CD pipeline definitions
+│       ├── ci.yml                              # CI: Build, test, push Docker images
+│       └── cd.yml                              # CD: Deploy to AWS EKS
+├── backend/                                    # Monolithic FastAPI backend (API, WebSocket, worker)
+│   ├── app/                                    # Core application code
+│   │   ├── __init__.py                         # Marks app as Python package
+│   │   ├── main.py                             # FastAPI app entry point (REST, WebSocket)
+│   │   ├── config.py                           # Configuration (env vars, DB URLs)
+│   │   ├── dependencies.py                     # Dependency injection (e.g., DB session, JWT)
+│   │   ├── models/                             # Pydantic and SQLAlchemy models
+│   │   │   ├── __init__.py                     # Package marker
+│   │   │   ├── user.py                         # User model (Pydantic, SQLAlchemy)
+│   │   │   ├── chat_room.py                    # Chat room model
+│   │   │   ├── room_participant.py             # Room participant model
+│   │   │   ├── message.py                      # Message model
+│   │   │   ├── notification.py                 # Notification model
+│   │   ├── routes/                             # API route handlers
+│   │   │   ├── __init__.py                     # Package marker
+│   │   │   ├── auth.py                         # Auth endpoints (/register, /login, /logout)
+│   │   │   ├── users.py                        # User profile endpoints (/profile)
+│   │   │   ├── rooms.py                        # Room endpoints (/rooms, /rooms/{id}/...)
+│   │   │   ├── messages.py                      # Message history endpoint (/rooms/{id}/messages)
+│   │   │   ├── notifications.py                # Notification endpoint (/notifications)
+│   │   ├── websocket/                          # WebSocket event handlers
+│   │   │   ├── __init__.py                     # Package marker
+│   │   │   ├── chat.py                         # WebSocket endpoint (/ws/{room_id})
+│   │   ├── services/                           # Business logic and external service integrations
+│   │   │   ├── __init__.py                     # Package marker
+│   │   │   ├── database.py                     # Database session management
+│   │   │   ├── redis.py                        # Redis client (cache, rate limiting)
+│   │   │   ├── rabbitmq.py                     # RabbitMQ client (notification tasks)
+│   │   │   ├── auth.py                         # JWT generation/validation
+│   │   │   ├── notification_worker.py           # RabbitMQ worker logic (email sending)
+│   │   ├── migrations/                         # Database migrations (Alembic)
+│   │   │   ├── env.py                          # Alembic configuration
+│   │   │   ├── script.py.mako                  # Migration script template
+│   │   │   ├── versions/                       # Migration scripts
+│   │   │       └── (empty initially)            # Placeholder for migration files
+│   ├── tests/                                  # Unit and integration tests
+│   │   ├── __init__.py                         # Package marker
+│   │   ├── conftest.py                         # Pytest fixtures (e.g., TestClient, DB)
+│   │   ├── test_auth.py                        # Tests for auth endpoints
+│   │   ├── test_users.py                       # Tests for user profile endpoints
+│   │   ├── test_rooms.py                       # Tests for room endpoints
+│   │   ├── test_messages.py                    # Tests for message endpoints
+│   │   ├── test_notifications.py               # Tests for notification endpoints
+│   │   ├── test_websocket.py                   # Tests for WebSocket events
+│   ├── Dockerfile                              # Docker image (Python 3.12)
+│   ├── pyproject.toml                          # Dependencies (redis-py, Python 3.12)
+│   ├── uv.lock                                 # Lock file
+│   ├── alembic.ini                             # Alembic configuration
+├── frontend/                                   # React frontend
+│   ├── public/                                 # Static assets
+│   │   ├── index.html                          # HTML entry point
+│   │   ├── favicon.ico                         # Favicon
+│   │   ├── manifest.json                       # Web app manifest
+│   ├── src/                                    # React source code
+│   │   ├── App.js                              # Main React component
+│   │   ├── index.js                            # React app entry point
+│   │   ├── components/                         # Reusable UI components
+│   │   │   ├── Login.js                        # Login form
+│   │   │   ├── Register.js                     # Registration form
+│   │   │   ├── RoomList.js                     # List of chat rooms
+│   │   │   ├── Room.js                         # Chat room UI
+│   │   │   ├── MessageList.js                  # Message display
+│   │   │   ├── NotificationList.js             # Notification display
+│   │   ├── hooks/                              # Custom React hooks
+│   │   │   ├── useAuth.js                      # Authentication state
+│   │   │   ├── useWebSocket.js                 # WebSocket connection
+│   │   ├── utils/                              # Utility functions
+│   │   │   ├── api.js                          # API client (axios)
+│   │   │   ├── websocket.js                    # WebSocket client
+│   ├── tests/                                  # Frontend tests
+│   │   ├── App.test.js                         # Tests for App component
+│   │   ├── Login.test.js                       # Tests for Login component
+│   │   ├── Register.test.js                    # Tests for Register component
+│   ├── Dockerfile                              # Docker image for frontend
+│   ├── package.json                            # Node dependencies and scripts
+│   ├── .eslintrc.json                          # ESLint configuration
+│   ├── .prettierrc                             # Prettier configuration
+├── k8s/                                        # Kubernetes manifests
+│   ├── backend-deployment.yaml                 # Backend deployment and service
+│   ├── frontend-deployment.yaml                # Frontend deployment and service
+│   ├── nginx-ingress.yaml                     # Nginx Ingress for routing
+│   ├── secrets.yaml                           # K8s secrets (DB, Redis, RabbitMQ URLs)
+│   ├── rabbitmq-deployment.yaml                # RabbitMQ deployment (since no AWS MQ in Free Tier)
+├── .gitignore                                  # Files to ignore in Git
+├── docker-compose.yml                          # Local development with Docker
+├── README.md                                   # Project documentation
+├── LICENSE                                     # Project license (e.g., MIT)
+

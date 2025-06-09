@@ -8,6 +8,48 @@ from sqlalchemy.sql import func
 
 from .base import Base
 
+
+# Pydantic model for API validation
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    display_name: str | None = None
+    profile_picture_url: str | None = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+        allow_population_by_field_name = True
+
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    display_name: str | None = None
+    profile_picture_url: str | None = None
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+        allow_population_by_field_name = True
+
+
+class UserGet(BaseModel):
+    user_id: UUID
+    email: EmailStr
+    username: str
+    display_name: str | None = None
+    profile_picture_url: str | None = None
+    created_at: DateTime
+    updated_at: DateTime
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+        allow_population_by_field_name = True
+
+
+# sqlalchemy model for database
 class User(Base):
     __tablename__ = "users"
 
@@ -18,6 +60,6 @@ class User(Base):
     display_name = Column(String(50))
     profile_picture_url = Column(String(255))
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
-
-    
+    updated_at = Column(
+        DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()
+    )

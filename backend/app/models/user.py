@@ -1,8 +1,8 @@
-from uuid import uuid4
-
+from uuid import uuid4, UUID as UUIDType
+from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime, String
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -11,42 +11,33 @@ from .base import Base
 
 # Pydantic model for API validation
 class UserCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     email: EmailStr
     username: str
     password: str
     display_name: str | None = None
     profile_picture_url: str | None = None
 
-    class Config:
-        orm_mode = True
-        from_attributes = True
-        allow_population_by_field_name = True
-
 
 class UserUpdate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     username: str | None = None
     display_name: str | None = None
     profile_picture_url: str | None = None
 
-    class Config:
-        orm_mode = True
-        from_attributes = True
-        allow_population_by_field_name = True
-
 
 class UserGet(BaseModel):
-    user_id: UUID
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: UUIDType
     email: EmailStr
     username: str
     display_name: str | None = None
     profile_picture_url: str | None = None
-    created_at: DateTime
-    updated_at: DateTime
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
-        allow_population_by_field_name = True
+    created_at: datetime
+    updated_at: datetime
 
 
 # sqlalchemy model for database

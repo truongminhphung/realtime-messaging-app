@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -11,24 +11,20 @@ from .base import Base
 
 # Pydantic model for API validation
 class ChatRoomCreate(BaseModel):
-    name: str
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
-        from_attributes = True
-        allow_population_by_field_name = True
+    name: str
 
 
 class ChatRoomUpdate(BaseModel):
-    name: str | None = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
-        from_attributes = True
-        allow_population_by_field_name = True
+    name: str | None = None
 
 
 class ChatRoomGet(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     room_id: uuid.UUID
     name: str
     creator_id: uuid.UUID

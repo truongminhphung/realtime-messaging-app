@@ -6,7 +6,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
-from base import Base
+from .base import Base
 
 # pydantic model for API validation
 class RoomParticipantCreate(BaseModel):
@@ -33,7 +33,7 @@ class RoomParticipant(Base):
     )
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.usr_id", ondelete="CASCADE"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         primary_key=True,
         index=True,
     )

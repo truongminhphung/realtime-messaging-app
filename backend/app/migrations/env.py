@@ -12,6 +12,8 @@ from alembic import context
 from app.models import Base
 # Import all models so Alembic can detect them
 from app.models.user import User
+from app.models.chat_room import ChatRoom
+from app.models.room_participant import RoomParticipant
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

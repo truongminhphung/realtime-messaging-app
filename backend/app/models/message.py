@@ -1,7 +1,6 @@
 import uuid
-import enum
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, DateTime, ForeignKey, String, Enum
+from sqlalchemy import Column, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from datetime import datetime

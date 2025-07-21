@@ -5,4 +5,6 @@ __all__ = [
     "Base",
     "RoomParticipant",
     "Notification",
+    "ChatRoom",
+    "Message",
 ]

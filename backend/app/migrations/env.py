@@ -15,6 +15,7 @@ from app.models.user import User
 from app.models.chat_room import ChatRoom
 from app.models.room_participant import RoomParticipant
 from app.models.notification import Notification
+from app.models.message import Message
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

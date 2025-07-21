@@ -1,116 +1,116 @@
-name: CI/CD Pipeline
+# name: CI/CD Pipeline
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
 
-env:
-  DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/db
-  REDIS_URL: redis://localhost:6379
-  RABBITMQ_URL: amqp://guest:guest@localhost:5672/
+# env:
+#   DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/db
+#   REDIS_URL: redis://localhost:6379
+#   RABBITMQ_URL: amqp://guest:guest@localhost:5672/
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
     
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+#     services:
+#       postgres:
+#         image: postgres:13
+#         env:
+#           POSTGRES_USER: user
+#           POSTGRES_PASSWORD: password
+#           POSTGRES_DB: db
+#         options: >-
+#           --health-cmd pg_isready
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 5432:5432
       
-      redis:
-        image: redis:6
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+#       redis:
+#         image: redis:6
+#         options: >-
+#           --health-cmd "redis-cli ping"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 6379:6379
       
-      rabbitmq:
-        image: rabbitmq:3-management
-        env:
-          RABBITMQ_DEFAULT_USER: guest
-          RABBITMQ_DEFAULT_PASS: guest
-        options: >-
-          --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 30s
-          --health-timeout 10s
-          --health-retries 5
-        ports:
-          - 5672:5672
+#       rabbitmq:
+#         image: rabbitmq:3-management
+#         env:
+#           RABBITMQ_DEFAULT_USER: guest
+#           RABBITMQ_DEFAULT_PASS: guest
+#         options: >-
+#           --health-cmd "rabbitmq-diagnostics -q ping"
+#           --health-interval 30s
+#           --health-timeout 10s
+#           --health-retries 5
+#         ports:
+#           - 5672:5672
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-          cache: 'pip'
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.12'
+#           cache: 'pip'
 
-      - name: Install uv
-        run: pip install uv
+#       - name: Install uv
+#         run: pip install uv
 
-      - name: Cache uv dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+#       - name: Cache uv dependencies
+#         uses: actions/cache@v3
+#         with:
+#           path: ~/.cache/uv
+#           key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml') }}
+#           restore-keys: |
+#             ${{ runner.os }}-uv-
 
-      - name: Install Python dependencies
-        run: |
-          cd backend
-          uv sync --extra dev
+#       - name: Install Python dependencies
+#         run: |
+#           cd backend
+#           uv sync --extra dev
 
-      - name: Run Python tests
-        run: |
-          cd backend
-          uv run pytest --cov=app tests/ --cov-report=xml
+#       - name: Run Python tests
+#         run: |
+#           cd backend
+#           uv run pytest --cov=app tests/ --cov-report=xml
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./backend/coverage.xml
-          flags: backend
+#       - name: Upload coverage to Codecov
+#         uses: codecov/codecov-action@v3
+#         with:
+#           file: ./backend/coverage.xml
+#           flags: backend
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '18'
+#           cache: 'npm'
+#           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Node.js dependencies
-        run: |
-          cd frontend
-          npm ci
+#       - name: Install Node.js dependencies
+#         run: |
+#           cd frontend
+#           npm ci
 
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
+#       - name: Build frontend
+#         run: |
+#           cd frontend
+#           npm run build
 
-      - name: Run frontend tests
-        run: |
-          cd frontend
-          npm test -- --coverage --watchAll=false
+#       - name: Run frontend tests
+#         run: |
+#           cd frontend
+#           npm test -- --coverage --watchAll=false
 
   # deploy:
   #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'

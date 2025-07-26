@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
 
-from backend.app.models.user import User, UserCreate, UserGet, UserUpdate
+from app.models.user import User, UserCreate, UserGet, UserUpdate
 
 
 # Password hashing context
@@ -32,7 +32,7 @@ class UserService:
         try:
             # Hash the password
             hashed_password = UserService.hash_password(user_data.password)
-            
+
             # Create user instance
             db_user = User(
                 email=user_data.email,
@@ -41,14 +41,14 @@ class UserService:
                 display_name=user_data.display_name,
                 profile_picture_url=user_data.profile_picture_url,
             )
-            
+
             # Add to session and commit
             session.add(db_user)
             await session.commit()
             await session.refresh(db_user)
-            
+
             return db_user
-            
+
         except IntegrityError as e:
             await session.rollback()
             if "email" in str(e):
@@ -59,7 +59,9 @@ class UserService:
                 raise ValueError("User creation failed due to constraint violation")
 
     @staticmethod
-    async def get_user_by_id(session: AsyncSession, user_id: UUIDType) -> Optional[User]:
+    async def get_user_by_id(
+        session: AsyncSession, user_id: UUIDType
+    ) -> Optional[User]:
         """Get a user by their ID."""
         stmt = select(User).where(User.user_id == user_id)
         result = await session.execute(stmt)
@@ -73,7 +75,9 @@ class UserService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_user_by_username(session: AsyncSession, username: str) -> Optional[User]:
+    async def get_user_by_username(
+        session: AsyncSession, username: str
+    ) -> Optional[User]:
         """Get a user by their username."""
         stmt = select(User).where(User.username == username)
         result = await session.execute(stmt)
@@ -124,10 +128,10 @@ class UserService:
         user = await UserService.get_user_by_email(session, email)
         if not user:
             return None
-        
+
         if not UserService.verify_password(password, user.hashed_password):
             return None
-            
+
         return user
 
     @staticmethod
@@ -148,7 +152,10 @@ class UserService:
 
         # Validate profile picture URL if provided
         if profile_data.profile_picture_url is not None:
-            if profile_data.profile_picture_url and len(profile_data.profile_picture_url) > 255:
+            if (
+                profile_data.profile_picture_url
+                and len(profile_data.profile_picture_url) > 255
+            ):
                 raise ValueError("Profile picture URL must be 255 characters or less")
 
         # Validate username if provided
@@ -157,9 +164,11 @@ class UserService:
                 raise ValueError("Username cannot be empty")
             if len(profile_data.username) > 50:
                 raise ValueError("Username must be 50 characters or less")
-            
+
             # Check if username is already taken by another user
-            existing_user = await UserService.get_user_by_username(session, profile_data.username)
+            existing_user = await UserService.get_user_by_username(
+                session, profile_data.username
+            )
             if existing_user and existing_user.user_id != user_id:
                 raise ValueError("Username already exists")
 
@@ -167,7 +176,7 @@ class UserService:
         if profile_data.username is not None:
             user.username = profile_data.username.strip()
         if profile_data.display_name is not None:
-            user.display_name = profile_data.display_name.strip() if profile_data.display_name else None
+            user.display_name = profile_data.display_name.strip()
         if profile_data.profile_picture_url is not None:
             user.profile_picture_url = profile_data.profile_picture_url
 
@@ -180,17 +189,19 @@ class UserService:
             raise ValueError("Username already exists")
 
     @staticmethod
-    async def get_user_profile_summary(session: AsyncSession, user_id: UUIDType) -> Optional[dict]:
+    async def get_user_profile_summary(
+        session: AsyncSession, user_id: UUIDType
+    ) -> Optional[dict]:
         """Get a summary of user profile information."""
         user = await UserService.get_user_by_id(session, user_id)
         if not user:
             return None
-            
+
         return {
             "user_id": str(user.user_id),
             "username": user.username,
             "display_name": user.display_name,
             "profile_picture_url": user.profile_picture_url,
             "created_at": user.created_at,
-            "updated_at": user.updated_at
+            "updated_at": user.updated_at,
         }

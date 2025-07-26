@@ -13,4 +13,6 @@ class Settings(BaseSettings):
     environment: str = os.getenv("ENVIRONMENT", "development")
     debug: bool = os.getenv("DEBUG", "True").lower() == "true"
 
+    TTL: int = 3600
+
 settings = Settings()

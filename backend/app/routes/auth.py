@@ -1,8 +1,10 @@
 from typing import Annotated
+import logging
 
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from app.db.depends import get_db
 from backend.app.dependencies import security, CurrentUser
@@ -17,6 +19,8 @@ from app.models.auth import (
 from backend.app.models.user import UserCreate
 from backend.app.services.auth import AuthService
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -57,6 +61,7 @@ async def register(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"An error occured during registration: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Registration failed"
@@ -95,6 +100,7 @@ async def login(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"An error occurred during login: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Login failed"

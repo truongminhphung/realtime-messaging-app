@@ -10,7 +10,7 @@ import redis.asyncio as redis
 
 from backend.app.config import settings
 from backend.app.models.user import User, UserCreate
-from app.services.user_service import UserService
+from backend.app.services.user_service import UserService
 
 
 # Password hashing context
@@ -77,7 +77,7 @@ class AuthService:
                 await redis_client.setex(f"blacklist:{token}", ttl, "1")
         except JWTError:
             # If token is invalid, still try to blacklist it for a short time
-            await redis_client.setex(f"blacklist:{token}", 3600, "1")  # 1 hour
+            await redis_client.setex(f"blacklist:{token}", settings.TTL, "1")  # 1 hour
 
     @staticmethod
     async def register_user(session: AsyncSession, user_data: UserCreate) -> User:

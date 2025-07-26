@@ -5,8 +5,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.depends import get_db
-from backend.app.models.user import User
-from backend.app.services.auth import AuthService
+from app.models.user import User
+from app.services.auth import AuthService
 
 
 # Re-export the database dependency for convenience

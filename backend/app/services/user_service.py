@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
 
-from app.models.user import User, UserCreate, UserGet, UserUpdate
+from backend.app.models.user import User, UserCreate, UserGet, UserUpdate
 
 
 # Password hashing context
@@ -129,3 +129,68 @@ class UserService:
             return None
             
         return user
+
+    @staticmethod
+    async def update_user_profile(
+        session: AsyncSession, user_id: UUIDType, profile_data: UserUpdate
+    ) -> Optional[User]:
+        """Update user profile with validation for profile-specific fields."""
+        user = await UserService.get_user_by_id(session, user_id)
+        if not user:
+            return None
+
+        # Validate display_name length if provided
+        if profile_data.display_name is not None:
+            if len(profile_data.display_name.strip()) == 0:
+                raise ValueError("Display name cannot be empty")
+            if len(profile_data.display_name) > 50:
+                raise ValueError("Display name must be 50 characters or less")
+
+        # Validate profile picture URL if provided
+        if profile_data.profile_picture_url is not None:
+            if profile_data.profile_picture_url and len(profile_data.profile_picture_url) > 255:
+                raise ValueError("Profile picture URL must be 255 characters or less")
+
+        # Validate username if provided
+        if profile_data.username is not None:
+            if len(profile_data.username.strip()) == 0:
+                raise ValueError("Username cannot be empty")
+            if len(profile_data.username) > 50:
+                raise ValueError("Username must be 50 characters or less")
+            
+            # Check if username is already taken by another user
+            existing_user = await UserService.get_user_by_username(session, profile_data.username)
+            if existing_user and existing_user.user_id != user_id:
+                raise ValueError("Username already exists")
+
+        # Update only provided fields
+        if profile_data.username is not None:
+            user.username = profile_data.username.strip()
+        if profile_data.display_name is not None:
+            user.display_name = profile_data.display_name.strip() if profile_data.display_name else None
+        if profile_data.profile_picture_url is not None:
+            user.profile_picture_url = profile_data.profile_picture_url
+
+        try:
+            await session.commit()
+            await session.refresh(user)
+            return user
+        except IntegrityError:
+            await session.rollback()
+            raise ValueError("Username already exists")
+
+    @staticmethod
+    async def get_user_profile_summary(session: AsyncSession, user_id: UUIDType) -> Optional[dict]:
+        """Get a summary of user profile information."""
+        user = await UserService.get_user_by_id(session, user_id)
+        if not user:
+            return None
+            
+        return {
+            "user_id": str(user.user_id),
+            "username": user.username,
+            "display_name": user.display_name,
+            "profile_picture_url": user.profile_picture_url,
+            "created_at": user.created_at,
+            "updated_at": user.updated_at
+        }

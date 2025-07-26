@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from backend.app.routes import auth, users, messages, rooms, notifications
+from app.routes import auth, users, messages, rooms, notifications
 from app.websocket import chat
 from app.db.depends import sessionmanager
 
@@ -26,8 +26,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Include routers
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(messages.router, prefix="/messages", tags=["messages"])
 app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
 app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

@@ -16,6 +16,7 @@ dependencies = [
     "passlib[bcrypt]>=1.7.4",
     "psycopg2-binary>=2.9.10",
     "pydantic[email]>=2.11.5",
+    "aio-pika>=9.0.0",
 ]
 
 [project.optional-dependencies]

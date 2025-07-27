@@ -14,9 +14,9 @@ async def lifespan(app: FastAPI):
     print("Starting up the Messaging App API...")
     sessionmanager.init_db()
     print("Database initialized successfully!")
-    
+
     yield
-    
+
     # Shutdown
     print("Shutting down the Messaging App API...")
     await sessionmanager.close()
@@ -28,10 +28,10 @@ app = FastAPI(lifespan=lifespan)
 # Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
-app.include_router(messages.router, prefix="/messages", tags=["messages"])
-app.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
-app.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
-app.include_router(chat.router, prefix="/chat", tags=["chat"])
+app.include_router(messages.router)
+app.include_router(rooms.router)
+app.include_router(notifications.router)
+app.include_router(chat.router)
 
 # WebSocket endpoint
 app.websocket("/ws/{room_id}", name="websocket_chat")(chat.websocket_endpoint)

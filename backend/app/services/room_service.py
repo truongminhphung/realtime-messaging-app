@@ -2,6 +2,7 @@ from typing import List, Optional
 from uuid import UUID as UUIDType
 import json
 
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, and_
 from sqlalchemy.exc import IntegrityError
@@ -48,7 +49,7 @@ class RoomService:
             return room
 
         except IntegrityError as e:
-            await session.rollback()    
+            await session.rollback()
             if "UNIQUE constraint failed" in str(e.orig):
                 raise ValueError("Room with this name already exists")
             else:
@@ -264,9 +265,11 @@ class RoomService:
             return None
 
         # Count participants
-        stmt = select(RoomParticipant).where(RoomParticipant.room_id == room_id)
+        stmt = select(func.count(RoomParticipant.user_id)).where(
+            RoomParticipant.room_id == room_id
+        )
         result = await session.execute(stmt)
-        participant_count = len(list(result.scalars().all()))
+        participant_count = result.scalar() or 0
 
         return {
             "room_id": str(room.room_id),
@@ -299,11 +302,12 @@ class RoomService:
 
             return room
 
-        except ValueError:
-            raise
-        except Exception:
+        except IntegrityError as e:
             await session.rollback()
-            raise ValueError("Failed to update room")
+            raise ValueError(f"Failed to update room due to database error: {str(e)}")
+        except Exception as e:
+            await session.rollback()
+            raise ValueError(f"Unexpected error while updating room: {str(e)}")
 
     @staticmethod
     async def delete_room(
@@ -328,8 +332,6 @@ class RoomService:
 
             return True
 
-        except ValueError:
-            raise
-        except Exception:
+        except Exception as e:
             await session.rollback()
-            raise ValueError("Failed to delete room")
+            raise ValueError(f"Unexpected error while deleting room: {str(e)}")

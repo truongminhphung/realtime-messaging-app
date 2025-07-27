@@ -48,8 +48,11 @@ class RoomService:
             return room
 
         except IntegrityError as e:
-            await session.rollback()
-            raise ValueError("Failed to create room")
+            await session.rollback()    
+            if "UNIQUE constraint failed" in str(e.orig):
+                raise ValueError("Room with this name already exists")
+            else:
+                raise ValueError("Invalid room data or failed to create room")
 
     @staticmethod
     async def get_room(session: AsyncSession, room_id: UUIDType) -> Optional[ChatRoom]:
@@ -108,9 +111,13 @@ class RoomService:
 
             return True
 
-        except IntegrityError:
+        except IntegrityError as e:
             await session.rollback()
-            raise ValueError("Failed to join room")
+            # raise ValueError("Failed to join room")
+            if "unique constraint failed" in str(e.orig):
+                raise ValueError("User is already a participant")
+            else:
+                raise ValueError("Failed to join room due to database error")
 
     @staticmethod
     async def leave_room(
@@ -137,9 +144,9 @@ class RoomService:
 
             return result.rowcount > 0
 
-        except Exception:
+        except Exception as e:
             await session.rollback()
-            raise ValueError("Failed to leave room")
+            raise ValueError(f"Unexpected error while leaving room: {str(e)}")
 
     @staticmethod
     async def get_room_participants(

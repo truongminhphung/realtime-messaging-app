@@ -22,7 +22,10 @@ from realtime_messaging.services.auth import AuthService
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+PREFIX = "/auth"
+tags = ["authentication"]
+
+router = APIRouter(prefix=PREFIX, tags=tags)
 
 
 @router.post(

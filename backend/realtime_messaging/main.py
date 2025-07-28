@@ -6,6 +6,7 @@ from realtime_messaging.routes import auth, users, messages, rooms, notification
 from realtime_messaging.websocket import chat
 from realtime_messaging.db.depends import sessionmanager
 from realtime_messaging.services.rabbitmq import startup_rabbitmq, shutdown_rabbitmq
+from .exceptions import configure_error_handlers
 
 
 @asynccontextmanager
@@ -30,6 +31,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+# Configure error handlers
+configure_error_handlers(app)
 
 # Include routers
 app.include_router(auth.router)

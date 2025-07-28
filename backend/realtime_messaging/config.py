@@ -15,4 +15,6 @@ class Settings(BaseSettings):
 
     TTL: int = 3600
 
+    SYSTEM_TIMEZONE: str = os.getenv("SYSTEM_TIMEZONE", "asia/ho_chi_minh")
+
 settings = Settings()

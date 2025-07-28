@@ -12,6 +12,7 @@ from realtime_messaging.config import settings
 from realtime_messaging.models.user import User, UserCreate
 from realtime_messaging.services.user_service import UserService
 
+from realtime_messaging.exceptions import DBItemExistsError
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -86,16 +87,14 @@ class AuthService:
             # Check if user already exists
             existing_user_email = await UserService.get_user_by_email(session, user_data.email)
             if existing_user_email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered"
+                raise DBItemExistsError(
+                    f"User with email {user_data.email} already exists"
                 )
 
             existing_user_username = await UserService.get_user_by_username(session, user_data.username)
             if existing_user_username:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Username already taken"
+                raise DBItemExistsError(
+                    f"User with username {user_data.username} already exists"
                 )
 
             # Create user using UserService

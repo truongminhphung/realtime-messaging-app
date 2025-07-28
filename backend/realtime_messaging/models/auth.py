@@ -1,4 +1,5 @@
 import re
+import logging
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from uuid import UUID as UUIDType
 from datetime import datetime
@@ -6,6 +7,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, status
 
+logger = logging.getLogger(__name__)
 
 class Token(BaseModel):
     """Token response model."""
@@ -104,11 +106,10 @@ class RegisterRequest(BaseModel):
             raise ValueError("Invalid email format")
         
         try:
-            # Let EmailStr do the proper validation
-            from pydantic import EmailStr
-            return EmailStr._validate(email_str)
+            # Just return the string, EmailStr field will handle validation
+            return email_str
         except Exception as e:
-            print(f"Email validation error: {e}")  # Debugging line
+            logger.error(f"Email validation error: {e}")
             raise ValueError("Invalid email format")
     
     @field_validator("username")

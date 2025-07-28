@@ -51,12 +51,7 @@ class UserService:
 
         except IntegrityError as e:
             await session.rollback()
-            if "email" in str(e):
-                raise ValueError("Email already exists")
-            elif "username" in str(e):
-                raise ValueError("Username already exists")
-            else:
-                raise ValueError("User creation failed due to constraint violation")
+            raise ValueError("User creation failed due to constraint violation")
 
     @staticmethod
     async def get_user_by_id(

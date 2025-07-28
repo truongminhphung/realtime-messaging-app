@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, logger
 from fastapi.responses import JSONResponse
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
@@ -31,7 +31,7 @@ async def handle_validation_error(request: Request, exc: ValidationError) -> JSO
 async def handle_request_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle FastAPI request validation errors (422 -> 400)."""
     errors = exc.errors()
-    print(f"Request validation error: {errors}")  # Debugging line
+    logger.error(f"Request validation error: {errors}")
     formatted_errors = []
     
     for error in errors:
@@ -49,3 +49,9 @@ async def handle_request_validation_error(request: Request, exc: RequestValidati
             "detail": formatted_errors if len(formatted_errors) > 1 else formatted_errors[0] if formatted_errors else "Invalid request data"
         },
     )
+
+
+class DBItemExistsError(HTTPException):
+    """Custom exception for item already exists."""
+    def __init__(self, detail: str = "Item already exists"):
+        super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)

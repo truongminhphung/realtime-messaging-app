@@ -1,6 +1,6 @@
 from typing import Annotated
 import logging
-
+import pytz
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,8 @@ from realtime_messaging.models.auth import (
 from realtime_messaging.models.user import UserCreate
 from realtime_messaging.services.auth import AuthService
 
+from realtime_messaging.config import settings
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,7 @@ PREFIX = "/auth"
 tags = ["authentication"]
 
 router = APIRouter(prefix=PREFIX, tags=tags)
+
 
 
 @router.post(
@@ -48,13 +51,17 @@ async def register(
         # Register the user
         user = await AuthService.register_user(session, user_create)
 
+        # Apply configured timezone to created_at
+        tz = pytz.timezone(settings.SYSTEM_TIMEZONE)
+        created_at_with_tz = user.created_at.astimezone(tz).isoformat()
+
         # Create user info for response
         user_info = UserTokenInfo(
             user_id=str(user.user_id),
             email=user.email,
             username=user.username,
             display_name=user.display_name,
-            created_at=user.created_at.isoformat(),
+            created_at=created_at_with_tz,
         )
 
         return RegisterResponse(message="User registered successfully", user=user_info)

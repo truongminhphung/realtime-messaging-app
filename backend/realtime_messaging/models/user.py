@@ -1,8 +1,9 @@
 from uuid import uuid4, UUID as UUIDType
 from datetime import datetime
 
+from fastapi import HTTPException
 from sqlalchemy import Column, Integer, String, DateTime
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 
@@ -13,6 +14,7 @@ from .base import Base
 class UserCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    # use plain str here so our validator can intercept first
     email: EmailStr
     username: str
     password: str

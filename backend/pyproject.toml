@@ -17,6 +17,8 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pydantic[email]>=2.11.5",
     "aio-pika>=9.0.0",
+    "httpx>=0.28.1",
+    "pytz>=2025.2",
 ]
 
 [project.optional-dependencies]

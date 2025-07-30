@@ -10,9 +10,16 @@ from sqlalchemy.orm import selectinload
 import redis.asyncio as redis
 
 from realtime_messaging.models.chat_room import ChatRoom, ChatRoomCreate, ChatRoomGet
-from realtime_messaging.models.room_participant import RoomParticipant, RoomParticipantGet
+from realtime_messaging.models.room_participant import (
+    RoomParticipant,
+    RoomParticipantGet,
+)
 from realtime_messaging.models.user import User
-from realtime_messaging.models.notification import Notification, NotificationType, NotificationStatus
+from realtime_messaging.models.notification import (
+    Notification,
+    NotificationType,
+    NotificationStatus,
+)
 from realtime_messaging.services.user_service import UserService
 from realtime_messaging.config import settings
 

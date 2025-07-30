@@ -30,7 +30,6 @@ tags = ["authentication"]
 router = APIRouter(prefix=PREFIX, tags=tags)
 
 
-
 @router.post(
     "/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED
 )
@@ -51,6 +50,7 @@ async def register(
         # Register the user
         user = await AuthService.register_user(session, user_create)
 
+        logger.info(f"User registered: {user.username} ({user.email})")
         # Apply configured timezone to created_at
         tz = pytz.timezone(settings.SYSTEM_TIMEZONE)
         created_at_with_tz = user.created_at.astimezone(tz).isoformat()

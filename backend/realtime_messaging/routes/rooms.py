@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr
 
 from realtime_messaging.db.depends import get_db
-from realtime_messaging.models.chat_room import ChatRoomCreate, ChatRoomGet, ChatRoomUpdate
+from realtime_messaging.models.chat_room import (
+    ChatRoomCreate,
+    ChatRoomGet,
+    ChatRoomUpdate,
+)
 from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
 from realtime_messaging.dependencies import CurrentUser

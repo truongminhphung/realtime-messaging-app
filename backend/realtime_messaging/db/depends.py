@@ -28,7 +28,9 @@ class SessionManager:
         # Parse the database URL to convert it to async format
         database_url = settings.database_url
         if database_url.startswith("postgresql://"):
-            database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            database_url = database_url.replace(
+                "postgresql://", "postgresql+asyncpg://", 1
+            )
         elif not database_url.startswith("postgresql+asyncpg://"):
             # If it's not already async, make it async
             database_url = database_url.replace("postgresql", "postgresql+asyncpg", 1)
@@ -77,5 +79,3 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency to get database session."""
     async for session in sessionmanager.get_session():
         yield session
-
-

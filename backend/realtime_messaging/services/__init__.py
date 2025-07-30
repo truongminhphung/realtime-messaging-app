@@ -11,14 +11,14 @@ from . import redis
 from . import database
 
 __all__ = [
-    "auth", 
-    "user_service", 
-    "message_service", 
-    "room_service", 
+    "auth",
+    "user_service",
+    "message_service",
+    "room_service",
     "notification_service",
     "notification_worker",
-    "notification_integration", 
-    "rabbitmq", 
-    "redis", 
-    "database"
+    "notification_integration",
+    "rabbitmq",
+    "redis",
+    "database",
 ]

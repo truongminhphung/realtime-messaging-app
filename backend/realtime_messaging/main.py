@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     print("Starting up the Messaging App API...")
     sessionmanager.init_db()
     print("Database initialized successfully!")
-    
+
     # Initialize RabbitMQ
     await startup_rabbitmq()
     print("RabbitMQ initialized successfully!")

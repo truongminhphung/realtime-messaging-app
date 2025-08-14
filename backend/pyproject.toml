@@ -33,6 +33,22 @@ dev = [
 
 [tool.black]
 line-length = 88
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+  | realtime_messaging/migrations
+)/
+'''
 [tool.mypy]
 files=  ["services", "models", "schemas", "main.py"]
 [tool.mypy.plugins.pydantic]

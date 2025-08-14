@@ -18,6 +18,7 @@ from realtime_messaging.exceptions import DBItemExistsError
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Redis client for token blacklisting
+print(f"Connecting to Redis at {settings.redis_url}")
 redis_client = redis.from_url(settings.redis_url)
 
 
@@ -35,7 +36,9 @@ class AuthService:
         return pwd_context.verify(plain_password, hashed_password)
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(
+        data: dict, expires_delta: Optional[timedelta] = None
+    ) -> str:
         """Create a JWT access token."""
         to_encode = data.copy()
         if expires_delta:
@@ -45,21 +48,34 @@ class AuthService:
                 minutes=settings.jwt_access_token_expire_minutes
             )
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+        encoded_jwt = jwt.encode(
+            to_encode, settings.jwt_secret, algorithm=settings.jwt_algorithm
+        )
         return encoded_jwt
 
     @staticmethod
     async def verify_token(token: str) -> Optional[dict]:
         """Verify a JWT token and return the payload."""
+        # Strip 'Bearer ' prefix if present
+        if token.lower().startswith("bearer "):
+            token = token.split(" ", 1)[1]
         try:
-            # Check if token is blacklisted
-            is_blacklisted = await redis_client.get(f"blacklist:{token}")
-            if is_blacklisted:
-                return None
+            # Check if token is blacklisted (with fallback if Redis unavailable)
+            try:
+                is_blacklisted = await redis_client.get(f"blacklist:{token}")
+                if is_blacklisted:
+                    return None
+            except Exception as redis_error:
+                # If Redis is unavailable, log the error but continue with token verification
+                print(f"Warning: Redis unavailable for blacklist check: {redis_error}")
+                # Continue without blacklist check
 
-            payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+            payload = jwt.decode(
+                token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+            )
             return payload
-        except JWTError:
+        except JWTError as e:
+            print(f"JWT Error: {e}")
             return None
 
     @staticmethod
@@ -67,13 +83,15 @@ class AuthService:
         """Add a token to the blacklist in Redis."""
         try:
             # Decode token to get expiration time
-            payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+            payload = jwt.decode(
+                token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+            )
             exp = payload.get("exp")
             if exp:
                 # Calculate TTL (time to live) until token expires
                 current_time = datetime.now(timezone.utc).timestamp()
                 ttl = max(0, int(exp - current_time))
-                
+
                 # Store in Redis with TTL
                 await redis_client.setex(f"blacklist:{token}", ttl, "1")
         except JWTError:
@@ -85,44 +103,46 @@ class AuthService:
         """Register a new user with hashed password."""
         try:
             # Check if user already exists
-            existing_user_email = await UserService.get_user_by_email(session, user_data.email)
+            existing_user_email = await UserService.get_user_by_email(
+                session, user_data.email
+            )
             if existing_user_email:
                 raise DBItemExistsError(
                     f"User with email {user_data.email} already exists"
                 )
-
-            existing_user_username = await UserService.get_user_by_username(session, user_data.username)
+            existing_user_username = await UserService.get_user_by_username(
+                session, user_data.username
+            )
             if existing_user_username:
                 raise DBItemExistsError(
                     f"User with username {user_data.username} already exists"
                 )
-
             # Create user using UserService
             user = await UserService.create_user(session, user_data)
             return user
 
         except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=str(e)
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     @staticmethod
-    async def authenticate_user(session: AsyncSession, email: str, password: str) -> Optional[User]:
+    async def authenticate_user(
+        session: AsyncSession, email: str, password: str
+    ) -> Optional[User]:
         """Authenticate a user with email and password."""
         user = await UserService.get_user_by_email(session, email)
         if not user:
             return None
-        
+
         if not AuthService.verify_password(password, user.hashed_password):
             return None
-            
+
         return user
 
     @staticmethod
     async def get_user_by_token(session: AsyncSession, token: str) -> Optional[User]:
         """Get user from JWT token."""
         payload = await AuthService.verify_token(token)
+        print(f"Payload from token: {payload}")
         if not payload:
             return None
 
@@ -140,12 +160,18 @@ class AuthService:
     @staticmethod
     def create_tokens_for_user(user: User) -> dict:
         """Create access tokens for a user."""
-        access_token_expires = timedelta(minutes=settings.jwt_access_token_expire_minutes)
-        access_token = AuthService.create_access_token(
-            data={"sub": str(user.user_id), "email": user.email, "username": user.username},
-            expires_delta=access_token_expires
+        access_token_expires = timedelta(
+            minutes=settings.jwt_access_token_expire_minutes
         )
-        
+        access_token = AuthService.create_access_token(
+            data={
+                "sub": str(user.user_id),
+                "email": user.email,
+                "username": user.username,
+            },
+            expires_delta=access_token_expires,
+        )
+
         return {
             "access_token": access_token,
             "token_type": "bearer",
@@ -155,6 +181,6 @@ class AuthService:
                 "email": user.email,
                 "username": user.username,
                 "display_name": user.display_name,
-                "created_at": user.created_at.isoformat()
-            }
+                "created_at": user.created_at.isoformat(),
+            },
         }

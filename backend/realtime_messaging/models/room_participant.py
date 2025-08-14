@@ -8,11 +8,13 @@ from sqlalchemy.sql import func
 
 from .base import Base
 
+
 # pydantic model for API validation
 class RoomParticipantCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     user_id: uuid.UUID
+
 
 class RoomParticipantGet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -20,6 +22,7 @@ class RoomParticipantGet(BaseModel):
     room_id: uuid.UUID
     user_id: uuid.UUID
     joined_at: datetime
+
 
 # Sqlalchemy model for database
 class RoomParticipant(Base):
@@ -38,7 +41,5 @@ class RoomParticipant(Base):
         index=True,
     )
     joined_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )

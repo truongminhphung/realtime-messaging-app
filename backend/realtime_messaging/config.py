@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     jwt_secret: str = os.getenv("JWT_SECRET", "secret-key-here")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
     jwt_access_token_expire_minutes: int = int(
-        os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+        os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60")
     )
 
     # Optional: Different configs for different environments

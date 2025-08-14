@@ -56,9 +56,13 @@ class AuthService:
     @staticmethod
     async def verify_token(token: str) -> Optional[dict]:
         """Verify a JWT token and return the payload."""
-        # Strip 'Bearer ' prefix if present
-        if token.lower().startswith("bearer "):
-            token = token.split(" ", 1)[1]
+        # make sure the token starts with 'Bearer '
+        if not token.lower().startswith("bearer "):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing Authorization Header",
+            )
+        token = token.split(" ", 1)[1]
         try:
             # Check if token is blacklisted (with fallback if Redis unavailable)
             try:
@@ -75,14 +79,20 @@ class AuthService:
             )
             return payload
         except JWTError as e:
-            print(f"JWT Error: {e}")
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token is invalid or expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     @staticmethod
     async def blacklist_token(token: str) -> None:
         """Add a token to the blacklist in Redis."""
         try:
             # Decode token to get expiration time
+            processed_token = (
+                token.split(" ", 1)[1] if token.lower().startswith("bearer ") else token
+            )
             payload = jwt.decode(
                 token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
             )
@@ -93,10 +103,12 @@ class AuthService:
                 ttl = max(0, int(exp - current_time))
 
                 # Store in Redis with TTL
-                await redis_client.setex(f"blacklist:{token}", ttl, "1")
+                await redis_client.setex(f"blacklist:{processed_token}", ttl, "1")
         except JWTError:
             # If token is invalid, still try to blacklist it for a short time
-            await redis_client.setex(f"blacklist:{token}", settings.TTL, "1")  # 1 hour
+            await redis_client.setex(
+                f"blacklist:{processed_token}", settings.TTL, "1"
+            )  # 1 hour
 
     @staticmethod
     async def register_user(session: AsyncSession, user_data: UserCreate) -> User:
@@ -142,7 +154,6 @@ class AuthService:
     async def get_user_by_token(session: AsyncSession, token: str) -> Optional[User]:
         """Get user from JWT token."""
         payload = await AuthService.verify_token(token)
-        print(f"Payload from token: {payload}")
         if not payload:
             return None
 

@@ -32,6 +32,7 @@ class MaritalStatus(str, Enum):
 
 
 # Pydantic models for API validation
+# It follows Inheritance concept of OOP
 class UserProfileBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

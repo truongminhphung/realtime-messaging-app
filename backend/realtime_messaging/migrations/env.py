@@ -16,6 +16,7 @@ from realtime_messaging.models.chat_room import ChatRoom
 from realtime_messaging.models.room_participant import RoomParticipant
 from realtime_messaging.models.notification import Notification
 from realtime_messaging.models.message import Message
+from realtime_messaging.models.userprofile import UserProfile
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

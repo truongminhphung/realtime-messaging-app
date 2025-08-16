@@ -131,6 +131,17 @@ class LogoutResponse(BaseModel):
     message: str
 
 
+class TokenVerificationResponse(BaseModel):
+    """Token verification response model."""
+
+    valid: bool
+    user_id: str | None = None
+    email: str | None = None
+    username: str | None = None
+    display_name: str | None = None
+    expires_at: int | None = None
+
+
 class ErrorResponse(BaseModel):
     """Error response model."""
 

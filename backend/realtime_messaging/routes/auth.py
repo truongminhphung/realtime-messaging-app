@@ -83,9 +83,14 @@ async def login(
     """Authenticate user and return JWT token."""
     try:
         # Authenticate user
-        user = await AuthService.authenticate_user(
-            session, login_data.email, login_data.password
-        )
+        try:
+            user = await AuthService.authenticate_user(
+                session, login_data.email, login_data.password
+            )
+        except HTTPException as e:
+            print("HTTPException occurred: ", e)
+            raise
+        print("print user: ", user)
 
         if not user:
             raise HTTPException(
@@ -116,6 +121,7 @@ async def login(
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+    # current_user: CurrentUser
 ) -> LogoutResponse:
     """Logout user by blacklisting the JWT token."""
     try:

@@ -94,7 +94,7 @@ class AuthService:
                 token.split(" ", 1)[1] if token.lower().startswith("bearer ") else token
             )
             payload = jwt.decode(
-                token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+                processed_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
             )
             exp = payload.get("exp")
             if exp:

@@ -83,9 +83,14 @@ async def login(
     """Authenticate user and return JWT token."""
     try:
         # Authenticate user
-        user = await AuthService.authenticate_user(
-            session, login_data.email, login_data.password
-        )
+        try:
+            user = await AuthService.authenticate_user(
+                session, login_data.email, login_data.password
+            )
+        except HTTPException as e:
+            print("HTTPException occurred: ", e)
+            raise
+        print("print user: ", user)
 
         if not user:
             raise HTTPException(

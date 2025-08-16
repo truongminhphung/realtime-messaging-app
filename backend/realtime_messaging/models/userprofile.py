@@ -6,6 +6,7 @@ from sqlalchemy import Column, String, Date, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy import Enum as SQLAlchemyEnum
+from sqlalchemy.orm import relationship
 
 from .base import Base
 
@@ -58,7 +59,6 @@ class UserProfileUpdate(UserProfileBase):
 
 
 class UserProfileGet(UserProfileBase):
-    id: uuid.UUID
     user_id: uuid.UUID
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -68,12 +68,14 @@ class UserProfileGet(UserProfileBase):
 class UserProfile(Base):
     __tablename__ = "user_profiles"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.user_id", ondelete="CASCADE"),
+        primary_key=True,
         nullable=False,
+        index=True
     )
+    user = relationship("User", back_populates="profile")
     phone_number = Column(String(20))
     address = Column(String(255))
     city = Column(String(100))

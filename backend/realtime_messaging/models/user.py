@@ -1,11 +1,11 @@
 from uuid import uuid4, UUID as UUIDType
 from datetime import datetime
 
-from fastapi import HTTPException
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, String, DateTime
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 from .base import Base
 
@@ -56,3 +56,4 @@ class User(Base):
     updated_at = Column(
         DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()
     )
+    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")

@@ -21,7 +21,7 @@ class Gender(str, Enum):
 
 
 class MaritalStatus(str, Enum):
-    SINGLE = "single"
+    SINGLE = "SINGLE"
     MARRIED = "MARRIED"
     DIVORCED = "DIVORCED"
     WIDOWED = "WIDOWED"

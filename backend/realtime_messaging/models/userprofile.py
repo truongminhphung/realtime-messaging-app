@@ -49,6 +49,17 @@ class UserProfileBase(BaseModel):
     education: str | None = None
     bio: str | None = None
 
+    @field_validator("phone_number")
+    def validate_phone_number(cls, value):
+        if len(value) < 10 or len(value) > 15:
+            raise ValueError("Phone number must be between 10 and 15 characters.")
+
+    @field_validator("date_of_birth")
+    def validate_date_of_birth(cls, value):
+        if value >= date.today():
+            raise ValueError("Date of birth cannot be today or in the future.")
+        return value
+
 
 class UserProfileCreate(UserProfileBase):
     pass
@@ -73,7 +84,7 @@ class UserProfile(Base):
         ForeignKey("users.user_id", ondelete="CASCADE"),
         primary_key=True,
         nullable=False,
-        index=True
+        index=True,
     )
     user = relationship("User", back_populates="profile")
     phone_number = Column(String(20))

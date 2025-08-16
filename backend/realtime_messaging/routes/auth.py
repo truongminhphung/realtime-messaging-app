@@ -121,7 +121,7 @@ async def login(
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-    current_user: CurrentUser
+    # current_user: CurrentUser
 ) -> LogoutResponse:
     """Logout user by blacklisting the JWT token."""
     try:

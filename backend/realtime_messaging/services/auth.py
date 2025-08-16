@@ -10,6 +10,7 @@ import redis.asyncio as redis
 
 from realtime_messaging.config import settings
 from realtime_messaging.models.user import User, UserCreate
+from realtime_messaging.models.userprofile import UserProfile
 from realtime_messaging.services.user_service import UserService
 
 from realtime_messaging.exceptions import DBItemExistsError
@@ -94,7 +95,9 @@ class AuthService:
                 token.split(" ", 1)[1] if token.lower().startswith("bearer ") else token
             )
             payload = jwt.decode(
-                processed_token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+                processed_token,
+                settings.jwt_secret,
+                algorithms=[settings.jwt_algorithm],
             )
             exp = payload.get("exp")
             if exp:
@@ -129,12 +132,24 @@ class AuthService:
                 raise DBItemExistsError(
                     f"User with username {user_data.username} already exists"
                 )
-            # Create user using UserService
+
+            # Create user
             user = await UserService.create_user(session, user_data)
+
+            # create empty user profile
+            profile = UserProfile(user_id=user.user_id)
+            session.add(profile)
+
+            await session.commit()
+            await session.refresh(user)
+
             return user
 
-        except ValueError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            )
 
     @staticmethod
     async def authenticate_user(

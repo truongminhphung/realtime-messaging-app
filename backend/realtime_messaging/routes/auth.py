@@ -15,6 +15,7 @@ from realtime_messaging.models.auth import (
     RegisterResponse,
     LogoutResponse,
     UserTokenInfo,
+    TokenVerificationResponse,
 )
 from realtime_messaging.models.user import UserCreate
 from realtime_messaging.services.auth import AuthService
@@ -148,29 +149,46 @@ async def get_current_user_info(current_user: CurrentUser) -> UserTokenInfo:
     )
 
 
-@router.post("/verify-token")
+@router.post("/verify-token", response_model=TokenVerificationResponse)
 async def verify_token(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     session: Annotated[AsyncSession, Depends(get_db)],
-) -> dict:
-    """Verify if a JWT token is valid."""
+) -> TokenVerificationResponse:
+    """
+    Verify if a JWT token is valid and return user information.
+
+    Returns token validity status along with user information if valid.
+    This endpoint follows industry standards for token verification.
+    """
     try:
         token = credentials.credentials
-        user = await AuthService.get_user_by_token(session, token)
 
+        # First verify the token structure and signature
+        payload = await AuthService.verify_token(f"Bearer {token}")
+        if not payload:
+            return TokenVerificationResponse(valid=False)
+
+        # Get user information from database using the raw token
+        user = await AuthService.get_user_by_token(session, f"Bearer {token}")
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-            )
+            return TokenVerificationResponse(valid=False)
 
-        return {
-            "valid": True,
-            "user_id": str(user.user_id),
-            "email": user.email,
-            "username": user.username,
-        }
+        # Extract expiration time from payload
+        expires_at = payload.get("exp")
 
-    except HTTPException:
+        return TokenVerificationResponse(
+            valid=True,
+            user_id=str(user.user_id),
+            email=user.email,
+            username=user.username,
+            display_name=user.display_name,
+            expires_at=expires_at,
+        )
+
+    except HTTPException as e:
+        if e.status_code == status.HTTP_401_UNAUTHORIZED:
+            return TokenVerificationResponse(valid=False)
         raise
-    except Exception:
-        return {"valid": False}
+    except Exception as e:
+        logger.error(f"Unexpected error during token verification: {e}")
+        return TokenVerificationResponse(valid=False)

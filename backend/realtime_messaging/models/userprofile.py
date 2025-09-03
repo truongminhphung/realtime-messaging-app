@@ -37,26 +37,46 @@ class MaritalStatus(str, Enum):
 class UserProfileBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    phone_number: str | None = None
-    address: str | None = None
-    city: str | None = None
-    country: str | None = None
-    postal_code: str | None = None
-    date_of_birth: date | None = None
-    gender: Gender | None = None
-    marital_status: MaritalStatus | None = None
-    company: str | None = None
-    education: str | None = None
-    bio: str | None = None
+    phone_number: str | None = Field(
+        default=None, examples=["012346789"], description="User's phone number"
+    )
+    address: str | None = Field(
+        default=None, examples=["123 Main St"], description="User's address"
+    )
+    city: str | None = Field(
+        default=None, max_length=100, examples=["New York"], description="User's city"
+    )
+    country: str | None = Field(
+        default=None, max_length=100, examples=["USA"], description="User's country"
+    )
+    postal_code: str | None = Field(
+        default=None,
+        max_length=20,
+        examples=["10001"],
+        description="User's postal code",
+    )
+    date_of_birth: date | None = Field(
+        default=None, examples=["1990-01-01"], description="User's date of birth"
+    )
+    gender: Gender | None = Field(default=None, description="User's gender")
+    marital_status: MaritalStatus | None = Field(
+        default=None, description="User's marital status"
+    )
+    company: str | None = Field(default=None, description="User's company")
+    education: str | None = Field(
+        default=None, max_length=255, description="User's education"
+    )
+    bio: str | None = Field(default=None, description="User's bio")
 
     @field_validator("phone_number")
     def validate_phone_number(cls, value):
-        if len(value) < 10 or len(value) > 15:
+        if value and (len(value) < 10 or len(value) > 15):
             raise ValueError("Phone number must be between 10 and 15 characters.")
+        return value
 
     @field_validator("date_of_birth")
     def validate_date_of_birth(cls, value):
-        if value >= date.today():
+        if value and value >= date.today():
             raise ValueError("Date of birth cannot be today or in the future.")
         return value
 
@@ -66,7 +86,7 @@ class UserProfileCreate(UserProfileBase):
 
 
 class UserProfileUpdate(UserProfileBase):
-    pass
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
 
 class UserProfileGet(UserProfileBase):

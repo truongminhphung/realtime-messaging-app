@@ -7,10 +7,11 @@ from realtime_messaging.dependencies import CurrentUser
 from realtime_messaging.db.depends import get_db
 from realtime_messaging.services.userprofile_service import UserProfileService
 
-router = APIRouter(prefix="/userprofiles", tags=["userprofiles"])
+PREFIX = "/userprofiles"
+router = APIRouter(prefix=PREFIX, tags=["userprofiles"])
 
 
-@router.get("/me", response_model=UserProfileGet)
+@router.get("/me", response_model=UserProfileGet, status_code=status.HTTP_200_OK)
 async def get_current_user_profile(
     current_user: CurrentUser,
     session: Annotated[AsyncSession, Depends(get_db)],
@@ -22,3 +23,15 @@ async def get_current_user_profile(
             status_code=status.HTTP_404_NOT_FOUND, detail="User profile not found"
         )
     return UserProfileGet.model_validate(profile)
+
+
+@router.patch("/profile", status_code=status.HTTP_204_NO_CONTENT)
+async def update_user_profile(
+    current_user: CurrentUser,
+    session: Annotated[AsyncSession, Depends(get_db)],
+    profile_data: UserProfileUpdate,
+) -> None:
+    """Update current user's profile information."""
+    await UserProfileService.update_user_profile(
+        session, current_user.user_id, profile_data
+    )

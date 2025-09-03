@@ -37,7 +37,7 @@ router = APIRouter(prefix=PREFIX, tags=tags)
 async def register(
     register_data: RegisterRequest, session: Annotated[AsyncSession, Depends(get_db)]
 ) -> RegisterResponse:
-    """Register a new user."""
+    """Register a new user and user profile"""
     try:
         # Create UserCreate object from RegisterRequest
         user_create = UserCreate(

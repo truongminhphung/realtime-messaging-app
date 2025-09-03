@@ -2,7 +2,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from realtime_messaging.routes import auth, users, messages, rooms, notifications
+from realtime_messaging.routes import (
+    auth,
+    users,
+    userprofiles,
+    messages,
+    rooms,
+    notifications,
+)
 from realtime_messaging.websocket import chat
 from realtime_messaging.db.depends import sessionmanager
 from realtime_messaging.services.rabbitmq import startup_rabbitmq, shutdown_rabbitmq
@@ -38,6 +45,7 @@ configure_error_handlers(app)
 # Include routers
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(userprofiles.router)
 app.include_router(messages.router)
 app.include_router(rooms.router)
 app.include_router(notifications.router)

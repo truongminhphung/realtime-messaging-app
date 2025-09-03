@@ -56,4 +56,9 @@ class User(Base):
     updated_at = Column(
         DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()
     )
-    profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    profile = relationship(
+        "UserProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )

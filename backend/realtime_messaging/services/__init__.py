@@ -13,6 +13,7 @@ from . import database
 __all__ = [
     "auth",
     "user_service",
+    "userprofile_service",
     "message_service",
     "room_service",
     "notification_service",

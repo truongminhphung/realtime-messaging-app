@@ -44,8 +44,7 @@ class UserService:
 
             # Add to session and commit
             session.add(db_user)
-            await session.commit()
-            await session.refresh(db_user)
+            await session.flush()  # generate user_id without committing
 
             return db_user
 

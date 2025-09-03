@@ -19,7 +19,6 @@ class UserCreate(BaseModel):
     username: str
     password: str
     display_name: str | None = None
-    profile_picture_url: str | None = None
 
 
 class UserUpdate(BaseModel):
@@ -27,7 +26,6 @@ class UserUpdate(BaseModel):
 
     username: str | None = None
     display_name: str | None = None
-    profile_picture_url: str | None = None
 
 
 class UserGet(BaseModel):
@@ -37,7 +35,6 @@ class UserGet(BaseModel):
     email: EmailStr
     username: str
     display_name: str | None = None
-    profile_picture_url: str | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -51,7 +48,6 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     display_name = Column(String(50))
-    profile_picture_url = Column(String(255))
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
     updated_at = Column(
         DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now()

@@ -67,10 +67,7 @@ class ChatRoomBase(BaseModel):
             allowed_keys = {
                 "allow_editing",
                 "theme",
-                "notifications",
-                "read_receipts",
                 "file_sharing",
-                "message_retention_days",
             }
 
             for key in value.keys():
@@ -147,10 +144,7 @@ class ChatRoomUpdateBase(BaseModel):
             allowed_keys = {
                 "allow_editing",
                 "theme",
-                "notifications",
-                "read_receipts",
                 "file_sharing",
-                "message_retention_days",
             }
 
             for key in value.keys():

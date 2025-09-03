@@ -179,22 +179,24 @@ class ChatRoomGet(ChatRoomBase):
 class ChatRoom(Base):
     __tablename__ = "chat_rooms"
 
-    room_id = Column(
+    room_id: uuid.UUID = Column(
         UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4
     )
-    name = Column(String(100), nullable=False)
-    description = Column(String(500), nullable=True)
-    creator_id = Column(
+    name: str = Column(String(100), nullable=False)
+    description: str | None = Column(String(500), nullable=True)
+    creator_id: uuid.UUID = Column(
         UUID(as_uuid=True),
         ForeignKey("users.user_id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    is_private = Column(Boolean, nullable=False, default=False)
-    max_participants = Column(Integer, nullable=True)
-    avatar_url = Column(String(500), nullable=True)
-    settings = Column(JSONB, nullable=True)
-    created_at = Column(
+    is_private: bool = Column(Boolean, nullable=False, default=False)
+    max_participants: int | None = Column(Integer, nullable=True)
+    avatar_url: str | None = Column(String(500), nullable=True)
+    settings: Dict[str, Any] | None = Column(JSONB, nullable=True)
+    created_at: datetime = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=func.now())
+    updated_at: datetime | None = Column(
+        DateTime(timezone=True), nullable=True, onupdate=func.now()
+    )

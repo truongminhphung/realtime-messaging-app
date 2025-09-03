@@ -10,6 +10,45 @@ from sqlalchemy.sql import func
 from .base import Base
 
 
+# Shared validation methods
+class ChatRoomValidators:
+    @staticmethod
+    def validate_settings_structure(value):
+        """Shared validation logic for settings field"""
+        if value is not None:
+            # Validate common settings structure
+            allowed_keys = {
+                "allow_editing",
+                "theme",
+                "file_sharing",
+            }
+
+            for key in value.keys():
+                if key not in allowed_keys:
+                    raise ValueError(f"Invalid settings key: {key}")
+
+            # Validate theme structure if present
+            if "theme" in value:
+                theme = value["theme"]
+                if not isinstance(theme, dict):
+                    raise ValueError("Theme must be a dictionary")
+
+                valid_theme_keys = {"background", "text_color", "accent_color"}
+                for theme_key in theme.keys():
+                    if theme_key not in valid_theme_keys:
+                        raise ValueError(f"Invalid theme key: {theme_key}")
+
+        return value
+
+    @staticmethod
+    def validate_description(value):
+        if value is not None:
+            value = value.strip()
+            if len(value) == 0:
+                return None
+        return value
+
+
 # Pydantic base model with shared fields and validation
 class ChatRoomBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -41,11 +80,7 @@ class ChatRoomBase(BaseModel):
     @field_validator("description")
     @classmethod
     def validate_description(cls, value):
-        if value is not None:
-            value = value.strip()
-            if len(value) == 0:
-                return None
-        return value
+        return ChatRoomValidators.validate_description(value)
 
     # @field_validator("avatar_url")
     # @classmethod
@@ -62,30 +97,7 @@ class ChatRoomBase(BaseModel):
     @field_validator("settings")
     @classmethod
     def validate_settings(cls, value):
-        if value is not None:
-            # Validate common settings structure
-            allowed_keys = {
-                "allow_editing",
-                "theme",
-                "file_sharing",
-            }
-
-            for key in value.keys():
-                if key not in allowed_keys:
-                    raise ValueError(f"Invalid settings key: {key}")
-
-            # Validate theme structure if present
-            if "theme" in value:
-                theme = value["theme"]
-                if not isinstance(theme, dict):
-                    raise ValueError("Theme must be a dictionary")
-
-                valid_theme_keys = {"background", "text_color", "accent_color"}
-                for theme_key in theme.keys():
-                    if theme_key not in valid_theme_keys:
-                        raise ValueError(f"Invalid theme key: {theme_key}")
-
-        return value
+        return ChatRoomValidators.validate_settings_structure(value)
 
 
 # Pydantic model for API validation
@@ -119,11 +131,7 @@ class ChatRoomUpdateBase(BaseModel):
     @field_validator("description")
     @classmethod
     def validate_description(cls, value):
-        if value is not None:
-            value = value.strip()
-            if len(value) == 0:
-                return None
-        return value
+        return ChatRoomValidators.validate_description(value)
 
     # @field_validator("avatar_url")
     # @classmethod
@@ -139,29 +147,7 @@ class ChatRoomUpdateBase(BaseModel):
     @field_validator("settings")
     @classmethod
     def validate_settings(cls, value):
-        if value is not None:
-            # Same validation as ChatRoomBase
-            allowed_keys = {
-                "allow_editing",
-                "theme",
-                "file_sharing",
-            }
-
-            for key in value.keys():
-                if key not in allowed_keys:
-                    raise ValueError(f"Invalid settings key: {key}")
-
-            if "theme" in value:
-                theme = value["theme"]
-                if not isinstance(theme, dict):
-                    raise ValueError("Theme must be a dictionary")
-
-                valid_theme_keys = {"background", "text_color", "accent_color"}
-                for theme_key in theme.keys():
-                    if theme_key not in valid_theme_keys:
-                        raise ValueError(f"Invalid theme key: {theme_key}")
-
-        return value
+        return ChatRoomValidators.validate_settings_structure(value)
 
 
 class ChatRoomUpdate(ChatRoomUpdateBase):

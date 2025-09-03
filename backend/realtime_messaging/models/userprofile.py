@@ -67,6 +67,9 @@ class UserProfileBase(BaseModel):
         default=None, max_length=255, description="User's education"
     )
     bio: str | None = Field(default=None, description="User's bio")
+    profile_picture_url: str | None = Field(
+        default=None, description="Profile picture URL"
+    )
 
     @field_validator("phone_number")
     def validate_phone_number(cls, value):
@@ -118,6 +121,7 @@ class UserProfile(Base):
     company = Column(String(100))
     education = Column(String(255))
     bio = Column(Text)
+    profile_picture_url = Column(String(255))
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

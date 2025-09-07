@@ -69,3 +69,12 @@ class DBItemExistsError(HTTPException):
 
     def __init__(self, detail: str = "Item already exists"):
         super().__init__(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
+class InternalServerError(HTTPException):
+    """Custom exception for internal server errors."""
+
+    def __init__(self, detail: str = "Internal server error"):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail
+        )

@@ -10,6 +10,17 @@ from sqlalchemy.sql import func
 from .base import Base
 
 
+DEFAULT_ROOM_SETTINGS = {
+    "allow_editing": True,
+    "theme": {
+        "background": "#ffffff",
+        "text_color": "#000000",
+        "accent_color": "#007bff",
+    },
+    "file_sharing": True,
+}
+
+
 # Shared validation methods
 class ChatRoomValidators:
     @staticmethod
@@ -51,7 +62,7 @@ class ChatRoomValidators:
 
 # Pydantic base model with shared fields and validation
 class ChatRoomBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     name: str = Field(
         max_length=100, description="Name of the chat room", examples=["General Chat"]
@@ -74,7 +85,8 @@ class ChatRoomBase(BaseModel):
         description="URL for the room's avatar or custom icon",
     )
     settings: Dict[str, Any] | None = Field(
-        default=None, description="Flexible configuration settings for the room"
+        default=DEFAULT_ROOM_SETTINGS,
+        description="Flexible configuration settings for the room",
     )
 
     @field_validator("description")

@@ -39,7 +39,6 @@ class UserService:
                 username=user_data.username,
                 hashed_password=hashed_password,
                 display_name=user_data.display_name,
-                profile_picture_url=user_data.profile_picture_url,
             )
 
             # Add to session and commit
@@ -92,8 +91,6 @@ class UserService:
             user.username = user_data.username
         if user_data.display_name is not None:
             user.display_name = user_data.display_name
-        if user_data.profile_picture_url is not None:
-            user.profile_picture_url = user_data.profile_picture_url
 
         try:
             await session.commit()
@@ -144,14 +141,6 @@ class UserService:
             if len(profile_data.display_name) > 50:
                 raise ValueError("Display name must be 50 characters or less")
 
-        # Validate profile picture URL if provided
-        if profile_data.profile_picture_url is not None:
-            if (
-                profile_data.profile_picture_url
-                and len(profile_data.profile_picture_url) > 255
-            ):
-                raise ValueError("Profile picture URL must be 255 characters or less")
-
         # Validate username if provided
         if profile_data.username is not None:
             if len(profile_data.username.strip()) == 0:
@@ -171,8 +160,6 @@ class UserService:
             user.username = profile_data.username.strip()
         if profile_data.display_name is not None:
             user.display_name = profile_data.display_name.strip()
-        if profile_data.profile_picture_url is not None:
-            user.profile_picture_url = profile_data.profile_picture_url
 
         try:
             await session.commit()

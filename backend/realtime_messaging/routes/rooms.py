@@ -64,14 +64,14 @@ async def create_room(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/", response_model=List[ChatRoomGet])
+@router.get("/", response_model=List[ChatRoomGet], status_code=status.HTTP_200_OK)
 async def get_user_rooms(
     current_user: CurrentUser, session: AsyncSession = Depends(get_db)
 ) -> List[ChatRoomGet]:
     """Get all rooms that the current user is a participant in."""
     try:
         rooms = await RoomService.get_user_rooms(session, current_user.user_id)
-        return [ChatRoomGet.model_validate(room) for room in rooms]
+        return rooms
 
     except Exception as e:
         raise HTTPException(

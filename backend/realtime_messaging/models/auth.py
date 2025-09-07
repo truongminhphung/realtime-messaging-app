@@ -61,7 +61,6 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
     display_name: str | None = None
-    profile_picture_url: str | None = None
 
     @field_validator("username")
     @classmethod

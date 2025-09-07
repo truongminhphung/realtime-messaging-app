@@ -71,7 +71,7 @@ async def get_user_rooms(
     """Get all rooms that the current user is a participant in."""
     try:
         rooms = await RoomService.get_user_rooms(session, current_user.user_id)
-        return rooms
+        return [ChatRoomGet.model_validate(room) for room in rooms]
 
     except Exception as e:
         raise HTTPException(

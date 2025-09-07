@@ -57,24 +57,8 @@ async def create_room(
     session: AsyncSession = Depends(get_db),
 ) -> ChatRoomGet:
     """Create a new chat room."""
-    try:
-        if not room_data.name or len(room_data.name.strip()) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Room name cannot be empty",
-            )
-
-        if len(room_data.name.strip()) > 100:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Room name must be 100 characters or less",
-            )
-
-        room = await RoomService.create_room(session, room_data, current_user.user_id)
-        return ChatRoomGet.model_validate(room)
-
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    room = await RoomService.create_room(session, room_data, current_user.user_id)
+    return ChatRoomGet.model_validate(room)
 
 
 @router.get("/", response_model=List[ChatRoomGet])

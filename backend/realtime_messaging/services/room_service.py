@@ -1,6 +1,8 @@
 from typing import List, Optional
 from uuid import UUID as UUIDType
 import json
+import logging
+from fastapi import HTTPException, status
 
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,10 +24,12 @@ from realtime_messaging.models.notification import (
 )
 from realtime_messaging.services.user_service import UserService
 from realtime_messaging.config import settings
-
+from realtime_messaging.exceptions import InternalServerError
 
 # Redis client for caching
 redis_client = redis.from_url(settings.redis_url)
+
+logger = logging.getLogger(__name__)
 
 
 class RoomService:
@@ -37,8 +41,28 @@ class RoomService:
     ) -> ChatRoom:
         """Create a new chat room and add creator as first participant."""
         try:
+            if not room_data.name or len(room_data.name.strip()) == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Room name cannot be empty",
+                )
+
+            if len(room_data.name.strip()) > 100:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Room name must be 100 characters or less",
+                )
+
             # Create the room
-            room = ChatRoom(name=room_data.name.strip(), creator_id=creator_id)
+            room = ChatRoom(
+                creator_id=creator_id,
+                name=room_data.name.strip(),
+                description=room_data.description.strip(),
+                is_private=room_data.is_private,
+                max_participants=room_data.max_participants,
+                avatar_url=room_data.avatar_url,
+                settings=room_data.settings or {},
+            )
 
             session.add(room)
             await session.flush()  # Get the room_id before committing
@@ -50,17 +74,12 @@ class RoomService:
             await session.commit()
             await session.refresh(room)
 
-            # Clear cached participants for this room
-            await redis_client.delete(f"room_participants:{room.room_id}")
-
             return room
 
         except IntegrityError as e:
             await session.rollback()
-            if "UNIQUE constraint failed" in str(e.orig):
-                raise ValueError("Room with this name already exists")
-            else:
-                raise ValueError("Invalid room data or failed to create room")
+            logger.error(f"IntegrityError while creating room: {str(e)}")
+            raise InternalServerError("Failed to create room due to database error")
 
     @staticmethod
     async def get_room(session: AsyncSession, room_id: UUIDType) -> Optional[ChatRoom]:

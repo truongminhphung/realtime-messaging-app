@@ -57,8 +57,11 @@ async def create_room(
     session: AsyncSession = Depends(get_db),
 ) -> ChatRoomGet:
     """Create a new chat room."""
-    room = await RoomService.create_room(session, room_data, current_user.user_id)
-    return ChatRoomGet.model_validate(room)
+    try:
+        room = await RoomService.create_room(session, room_data, current_user.user_id)
+        return ChatRoomGet.model_validate(room)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/", response_model=List[ChatRoomGet])

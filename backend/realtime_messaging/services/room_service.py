@@ -104,7 +104,7 @@ class RoomService:
             .order_by(ChatRoom.created_at.desc())
         )
         result = await session.execute(stmt)
-        return list(result.scalars().all())
+        return result.scalars().all()
 
     @staticmethod
     async def is_user_participant(

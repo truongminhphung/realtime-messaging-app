@@ -45,7 +45,6 @@ async def register(
             username=register_data.username,
             password=register_data.password,
             display_name=register_data.display_name,
-            profile_picture_url=register_data.profile_picture_url,
         )
 
         # Register the user

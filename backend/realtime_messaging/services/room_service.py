@@ -41,13 +41,15 @@ class RoomService:
     ) -> ChatRoom:
         """Create a new chat room and add creator as first participant."""
         try:
-            if not room_data.name or len(room_data.name.strip()) == 0:
+            # Validate room name
+            name = room_data.name.strip() if room_data.name else ""
+            if not name:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Room name cannot be empty",
                 )
 
-            if len(room_data.name.strip()) > 100:
+            if len(name) > 100:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Room name must be 100 characters or less",
@@ -56,8 +58,10 @@ class RoomService:
             # Create the room
             room = ChatRoom(
                 creator_id=creator_id,
-                name=room_data.name.strip(),
-                description=room_data.description.strip(),
+                name=name,
+                description=(
+                    room_data.description.strip() if room_data.description else None
+                ),
                 is_private=room_data.is_private,
                 max_participants=room_data.max_participants,
                 avatar_url=room_data.avatar_url,

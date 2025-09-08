@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID as UUIDType
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr
 
@@ -14,6 +14,7 @@ from realtime_messaging.models.chat_room import (
 from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
 from realtime_messaging.dependencies import CurrentUser
+from realtime_messaging.const import X_TOTAL_ROOMS
 
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -66,12 +67,19 @@ async def create_room(
 
 @router.get("/", response_model=List[ChatRoomGet], status_code=status.HTTP_200_OK)
 async def get_user_rooms(
-    current_user: CurrentUser, session: AsyncSession = Depends(get_db)
+    current_user: CurrentUser,
+    response: Response,
+    session: AsyncSession = Depends(get_db),
 ) -> List[ChatRoomGet]:
     """Get all rooms that the current user is a participant in."""
     try:
         rooms = await RoomService.get_user_rooms(session, current_user.user_id)
-        return [ChatRoomGet.model_validate(room) for room in rooms]
+        room_models = [ChatRoomGet.model_validate(room) for room in rooms]
+
+        # Add total count to response header
+        response.headers[X_TOTAL_ROOMS] = str(len(room_models))
+
+        return room_models
 
     except Exception as e:
         raise HTTPException(

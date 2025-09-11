@@ -10,6 +10,7 @@ from realtime_messaging.models.chat_room import (
     ChatRoomCreate,
     ChatRoomGet,
     ChatRoomUpdate,
+    PublicRoomSummary,
 )
 from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
@@ -21,6 +22,7 @@ from realtime_messaging.exceptions import (
     InternalServerError,
 )
 from realtime_messaging import messages as msg
+from realtime_messaging.services.common import PaginationParams
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -91,6 +93,26 @@ async def get_user_rooms(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve rooms",
         )
+
+
+@router.get(
+    "/public", response_model=List[PublicRoomSummary], status_code=status.HTTP_200_OK
+)
+async def get_public_rooms(
+    current_user: CurrentUser,
+    session: AsyncSession = Depends(get_db),
+    pagination: PaginationParams = Depends(),
+    response: Response,
+) -> List[PublicRoomSummary]:
+    """Get a list of public rooms with pagination."""
+    try:
+        public_rooms, total_count = await RoomService.get_public_rooms(
+            session, pagination
+        )
+        response.headers[X_TOTAL_ROOMS] = str(total_count)
+        return public_rooms
+    except Exception as e:
+        raise InternalServerError(detail=msg.FAILED_TO_RETRIEVE_PUBLIC_ROOMS)
 
 
 @router.get("/{room_id}", response_model=RoomWithDetails)

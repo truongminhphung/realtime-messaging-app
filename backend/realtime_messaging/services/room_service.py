@@ -102,7 +102,7 @@ class RoomService:
         session: AsyncSession, pagination: PaginationParams
     ) -> tuple[List[PublicRoomSummary], int]:
         """
-        Asynchronously retrieve a paginated list of public chat rooms and 
+        Asynchronously retrieve a paginated list of public chat rooms and
         the total count of all public rooms.
         """
 

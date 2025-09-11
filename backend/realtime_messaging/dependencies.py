@@ -52,4 +52,3 @@ async def get_current_active_user(
 
 # Commonly used dependency annotations
 CurrentUser = Annotated[User, Depends(get_current_user)]
-CurrentActiveUser = Annotated[User, Depends(get_current_active_user)]

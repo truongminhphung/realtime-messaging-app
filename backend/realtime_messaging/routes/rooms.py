@@ -15,7 +15,12 @@ from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
 from realtime_messaging.dependencies import CurrentUser
 from realtime_messaging.const import X_TOTAL_ROOMS
-
+from realtime_messaging.exceptions import (
+    NotFoundError,
+    ForbiddenError,
+    InternalServerError,
+)
+from realtime_messaging import messages as msg
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -94,36 +99,30 @@ async def get_room_details(
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_db),
 ) -> RoomWithDetails:
-    """Get detailed information about a specific room."""
+    """
+    Get detailed information about a specific room.
+    Only participants can access the room details.
+    """
     try:
+        room = await RoomService.get_room(session, room_id)
+        if not room:
+            raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
+
         # Check if user is a participant
         is_participant = await RoomService.is_user_participant(
             session, room_id, current_user.user_id
         )
-
         if not is_participant:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be a participant to view room details",
-            )
+            raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
 
         room_details = await RoomService.get_room_with_participant_count(
-            session, room_id
+            session, room_id, room
         )
-        if not room_details:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
-            )
 
         return RoomWithDetails(**room_details)
 
-    except HTTPException:
-        raise
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve room details",
-        )
+        raise InternalServerError(detail="Failed to retrieve room details")
 
 
 @router.put("/{room_id}", response_model=ChatRoomGet)

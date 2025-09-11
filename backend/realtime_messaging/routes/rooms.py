@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID as UUIDType
 
 from fastapi import APIRouter, HTTPException, Depends, status, Response
@@ -11,6 +11,7 @@ from realtime_messaging.models.chat_room import (
     ChatRoomGet,
     ChatRoomUpdate,
     PublicRoomSummary,
+    RoomPreview,
 )
 from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
@@ -100,9 +101,9 @@ async def get_user_rooms(
 )
 async def get_public_rooms(
     current_user: CurrentUser,
+    response: Response,
     session: AsyncSession = Depends(get_db),
     pagination: PaginationParams = Depends(),
-    response: Response,
 ) -> List[PublicRoomSummary]:
     """Get a list of public rooms with pagination."""
     try:
@@ -113,6 +114,27 @@ async def get_public_rooms(
         return public_rooms
     except Exception as e:
         raise InternalServerError(detail=msg.FAILED_TO_RETRIEVE_PUBLIC_ROOMS)
+
+
+@router.get(
+    "/{room_id}/preview", response_model=RoomPreview, status_code=status.HTTP_200_OK
+)
+async def get_room_preview(
+    room_id: UUIDType,
+    current_user: CurrentUser,
+    session: AsyncSession = Depends(get_db),
+) -> Optional[RoomPreview]:
+    """
+    Get a detailed preview of a room for join decision.
+    Includes whether the user is already a participant and if they can join.
+    """
+    try:
+        room_preview = await RoomService.get_room_preview(
+            session, room_id, current_user.user_id
+        )
+        return room_preview
+    except Exception as e:
+        raise InternalServerError(detail=str(e))
 
 
 @router.get("/{room_id}", response_model=RoomWithDetails)

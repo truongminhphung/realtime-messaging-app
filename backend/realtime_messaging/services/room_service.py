@@ -11,7 +11,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 import redis.asyncio as redis
 
-from realtime_messaging.models.chat_room import ChatRoom, ChatRoomCreate, ChatRoomGet
+from realtime_messaging.models.chat_room import (
+    ChatRoom,
+    ChatRoomCreate,
+    PublicRoomSummary,
+)
 from realtime_messaging.models.room_participant import (
     RoomParticipant,
     RoomParticipantGet,
@@ -25,6 +29,7 @@ from realtime_messaging.models.notification import (
 from realtime_messaging.services.user_service import UserService
 from realtime_messaging.config import settings
 from realtime_messaging.exceptions import InternalServerError
+from .common import PaginationParams
 
 # Redis client for caching
 redis_client = redis.from_url(settings.redis_url)
@@ -91,6 +96,85 @@ class RoomService:
         stmt = select(ChatRoom).where(ChatRoom.room_id == room_id)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_public_rooms(
+        session: AsyncSession, pagination: PaginationParams
+    ) -> tuple[List[PublicRoomSummary], int]:
+        """
+        Asynchronously retrieve a paginated list of public chat rooms and 
+        the total count of all public rooms.
+        """
+
+        count_stmt = select(func.count(ChatRoom.room_id)).where(
+            ChatRoom.is_private == False
+        )
+        total_result = await session.execute(count_stmt)
+        total_count = total_result.scalar() or 0
+
+        # Main query with pagination and participant count
+        stmt = (
+            select(
+                ChatRoom.room_id,
+                ChatRoom.name,
+                ChatRoom.description,
+                ChatRoom.max_participants,
+                ChatRoom.avatar_url,
+                ChatRoom.created_at,
+                User.username.label("creator_username"),
+                func.count(RoomParticipant.user_id).label("participant_count"),
+            )
+            .join(User, ChatRoom.creator_id == User.user_id)
+            .outerjoin(RoomParticipant, RoomParticipant.room_id == ChatRoom.room_id)
+            .where(ChatRoom.is_private == False)
+            .group_by(
+                ChatRoom.room_id,
+                ChatRoom.name,
+                ChatRoom.description,
+                ChatRoom.max_participants,
+                ChatRoom.avatar_url,
+                ChatRoom.created_at,
+                User.username,
+            )
+            .order_by(
+                func.count(RoomParticipant.user_id).desc(),
+                ChatRoom.created_at.desc(),
+            )
+        )
+
+        # Apply pagination
+        if pagination.limit:
+            stmt = stmt.limit(pagination.limit)
+        if pagination.offset:
+            stmt = stmt.offset(pagination.offset)
+
+        result = await session.execute(stmt)
+
+        public_room_summaries = []
+        for (
+            room_id,
+            name,
+            description,
+            max_participants,
+            avatar_url,
+            created_at,
+            creator_username,
+            participant_count,
+        ) in result.all():
+            public_room_summaries.append(
+                PublicRoomSummary(
+                    room_id=room_id,
+                    name=name,
+                    description=description,
+                    participant_count=participant_count,
+                    max_participants=max_participants,
+                    avatar_url=avatar_url,
+                    created_at=created_at,
+                    creator_username=creator_username,
+                )
+            )
+
+        return public_room_summaries, total_count
 
     @staticmethod
     async def get_user_rooms(

@@ -21,6 +21,19 @@ DEFAULT_ROOM_SETTINGS = {
 }
 
 
+class PublicRoomSummary(BaseModel):
+    """Summary info for public room browsing."""
+
+    room_id: uuid.UUID
+    name: str
+    description: str | None
+    participant_count: int
+    max_participants: int | None
+    avatar_url: str | None
+    created_at: datetime
+    creator_username: str
+
+
 # Shared validation methods
 class ChatRoomValidators:
     @staticmethod

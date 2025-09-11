@@ -11,6 +11,7 @@ from realtime_messaging.models.chat_room import (
     ChatRoomGet,
     ChatRoomUpdate,
     PublicRoomSummary,
+    RoomWithDetails,
 )
 from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
@@ -47,14 +48,6 @@ class RoomParticipant(BaseModel):
     display_name: str | None
     profile_picture_url: str | None
     joined_at: str
-
-
-class RoomWithDetails(BaseModel):
-    room_id: UUIDType
-    name: str
-    creator_id: UUIDType
-    created_at: str
-    participant_count: int
 
 
 # Room CRUD endpoints
@@ -100,9 +93,9 @@ async def get_user_rooms(
 )
 async def get_public_rooms(
     current_user: CurrentUser,
+    response: Response,
     session: AsyncSession = Depends(get_db),
     pagination: PaginationParams = Depends(),
-    response: Response,
 ) -> List[PublicRoomSummary]:
     """Get a list of public rooms with pagination."""
     try:
@@ -126,22 +119,10 @@ async def get_room_details(
     Only participants can access the room details.
     """
     try:
-        room = await RoomService.get_room(session, room_id)
-        if not room:
-            raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
-
-        # Check if user is a participant
-        is_participant = await RoomService.is_user_participant(
+        room = await RoomService.get_room_details(
             session, room_id, current_user.user_id
         )
-        if not is_participant:
-            raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
-
-        room_details = await RoomService.get_room_with_participant_count(
-            session, room_id, room
-        )
-
-        return RoomWithDetails(**room_details)
+        return room
 
     except Exception:
         raise InternalServerError(detail="Failed to retrieve room details")

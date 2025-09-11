@@ -78,3 +78,33 @@ class InternalServerError(HTTPException):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail
         )
+
+
+class NotFoundError(HTTPException):
+    """Custom exception for not found errors."""
+
+    def __init__(self, detail: str = "Resource not found"):
+        super().__init__(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+
+class UnauthorizedError(HTTPException):
+    """Custom exception for unauthorized access."""
+
+    def __init__(self, detail: str = "Unauthorized"):
+        super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
+
+
+class ForbiddenError(HTTPException):
+    """Custom exception for forbidden access."""
+
+    def __init__(self, detail: str = "Forbidden"):
+        super().__init__(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+
+class ServerError(HTTPException):
+    """Custom exception for internal errors."""
+
+    def __init__(self, detail: str = "Internal error"):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail
+        )

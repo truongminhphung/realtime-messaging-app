@@ -287,12 +287,11 @@ class RoomService:
 
     @staticmethod
     async def get_room_with_participant_count(
-        session: AsyncSession, room_id: UUIDType
+        session: AsyncSession, room_id: UUIDType, room: ChatRoom = None
     ) -> Optional[dict]:
         """Get room details with participant count."""
-        room = await RoomService.get_room(session, room_id)
-        if not room:
-            return None
+        if room is None:
+            room = await RoomService.get_room(session, room_id)
 
         # Count participants
         stmt = select(func.count(RoomParticipant.user_id)).where(

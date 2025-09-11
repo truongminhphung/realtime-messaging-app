@@ -102,7 +102,7 @@ async def get_public_rooms(
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_db),
     pagination: PaginationParams = Depends(),
-    response: Response = None,
+    response: Response,
 ) -> List[PublicRoomSummary]:
     """Get a list of public rooms with pagination."""
     try:

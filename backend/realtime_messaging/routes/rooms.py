@@ -15,7 +15,11 @@ from realtime_messaging.models.room_participant import RoomParticipantGet
 from realtime_messaging.services.room_service import RoomService
 from realtime_messaging.dependencies import CurrentUser
 from realtime_messaging.const import X_TOTAL_ROOMS
-from realtime_messaging.exceptions import NotFoundError, ForbiddenError, ServerError
+from realtime_messaging.exceptions import (
+    NotFoundError,
+    ForbiddenError,
+    InternalServerError,
+)
 from realtime_messaging import messages as msg
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
@@ -112,13 +116,13 @@ async def get_room_details(
             raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
 
         room_details = await RoomService.get_room_with_participant_count(
-            session, room_id
+            session, room_id, room
         )
 
         return RoomWithDetails(**room_details)
 
     except Exception:
-        raise ServerError(detail="Failed to retrieve room details")
+        raise InternalServerError(detail="Failed to retrieve room details")
 
 
 @router.put("/{room_id}", response_model=ChatRoomGet)

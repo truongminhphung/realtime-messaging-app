@@ -262,38 +262,41 @@ async def get_room_participants(
     session: AsyncSession = Depends(get_db),
 ) -> List[RoomParticipant]:
     """Get all participants in a room."""
-    try:
-        # Check if user is a participant
-        is_participant = await RoomService.is_user_participant(
-            session, room_id, current_user.user_id
-        )
+    # try:
+    participants = await RoomService.get_room_participants(
+        session, room_id, current_user.user_id
+    )
+    # Check if user is a participant
+    # is_participant = await RoomService.is_user_participant(
+    #     session, room_id, current_user.user_id
+    # )
 
-        if not is_participant:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be a participant to view room participants",
-            )
+    #     if not is_participant:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_403_FORBIDDEN,
+    #             detail="You must be a participant to view room participants",
+    #         )
 
-        participants_data = await RoomService.get_room_participants(session, room_id)
+    #     participants_data = await RoomService.get_room_participants(session, room_id)
 
-        participants = []
-        for participant in participants_data:
-            participants.append(
-                RoomParticipant(
-                    user_id=UUIDType(participant["user_id"]),
-                    username=participant["username"],
-                    display_name=participant["display_name"],
-                    profile_picture_url=participant["profile_picture_url"],
-                    joined_at=participant["joined_at"],
-                )
-            )
+    #     participants = []
+    #     for participant in participants_data:
+    #         participants.append(
+    #             RoomParticipant(
+    #                 user_id=UUIDType(participant["user_id"]),
+    #                 username=participant["username"],
+    #                 display_name=participant["display_name"],
+    #                 profile_picture_url=participant["profile_picture_url"],
+    #                 joined_at=participant["joined_at"],
+    #             )
+    #         )
 
-        return participants
+    #     return participants
 
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve room participants",
-        )
+    # except HTTPException:
+    #     raise
+    # except Exception:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail="Failed to retrieve room participants",
+    #     )

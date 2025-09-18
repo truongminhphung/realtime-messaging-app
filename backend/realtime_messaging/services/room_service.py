@@ -328,9 +328,22 @@ class RoomService:
 
     @staticmethod
     async def get_room_participants(
-        session: AsyncSession, room_id: UUIDType, use_cache: bool = True
+        session: AsyncSession,
+        room_id: UUIDType,
+        user_id: UUIDType,
+        use_cache: bool = True,
     ) -> List[dict]:
         """Get all participants in a room with their user details."""
+        room = await RoomService.get_room(session, room_id)
+        if not room:
+            raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
+
+        is_participant = await RoomService.is_user_participant(
+            session, room_id, user_id
+        )
+        if not is_participant:
+            raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
+
         cache_key = f"room_participants:{room_id}"
 
         # Try to get from cache first

@@ -499,7 +499,7 @@ class RoomService:
 
             return room
 
-        except Exception as e:
+        except IntegrityError as e:
             await session.rollback()
             logger.error(f"Error updating room: {str(e)}")
             raise InternalServerError("Failed to update room due to database error")

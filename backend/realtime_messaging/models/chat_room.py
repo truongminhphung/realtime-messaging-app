@@ -24,7 +24,11 @@ DEFAULT_ROOM_SETTINGS = {
 class RoomWithDetails(BaseModel):
     room_id: uuid.UUID
     name: str
-    creator_id: uuid.UUID
+    description: str | None
+    is_private: bool
+    max_participants: int | None
+    avatar_url: str | None
+    creator_name: str
     created_at: str
     participant_count: int
 
@@ -93,6 +97,14 @@ class ChatRoomValidators:
             value = value.strip()
             if len(value) == 0:
                 return None
+        return value
+
+    @staticmethod
+    def validate_room_name(value):
+        if value is not None:
+            value = value.strip()
+            if len(value) == 0:
+                raise ValueError("Room name cannot be empty")
         return value
 
 
@@ -196,6 +208,11 @@ class ChatRoomUpdateBase(BaseModel):
     @classmethod
     def validate_settings(cls, value):
         return ChatRoomValidators.validate_settings_structure(value)
+
+    @field_validator("name")
+    @classmethod
+    def validate_room_name(cls, value):
+        return ChatRoomValidators.validate_room_name(value)
 
 
 class ChatRoomUpdate(ChatRoomUpdateBase):

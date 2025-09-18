@@ -444,13 +444,19 @@ class RoomService:
         stmt = select(func.count(RoomParticipant.user_id)).where(
             RoomParticipant.room_id == room_id
         )
+
+        creator = await UserService.get_user_by_id(session, room.creator_id)
         result = await session.execute(stmt)
         participant_count = result.scalar() or 0
 
         return {
             "room_id": str(room.room_id),
             "name": room.name,
-            "creator_id": str(room.creator_id),
+            "description": room.description,
+            "is_private": room.is_private,
+            "avatar_url": room.avatar_url,
+            "max_participants": room.max_participants,
+            "creator_name": creator.username,
             "created_at": room.created_at.isoformat(),
             "participant_count": participant_count,
         }
@@ -463,27 +469,40 @@ class RoomService:
         try:
             room = await RoomService.get_room(session, room_id)
             if not room:
-                return None
+                raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
 
             # Only creator can update room
             if room.creator_id != user_id:
-                raise ValueError("Only room creator can update room details")
+                raise ValueError(msg.ERROR_ONLY_CREATOR_CAN_UPDATE)
 
             # Update room name if provided
             if "name" in room_data and room_data["name"]:
                 room.name = room_data["name"].strip()
+
+            if "description" in room_data:
+                room.description = (
+                    room_data["description"].strip()
+                    if room_data["description"]
+                    else None
+                )
+            if "is_private" in room_data:
+                room.is_private = room_data["is_private"]
+            if "max_participants" in room_data:
+                room.max_participants = room_data["max_participants"]
+            if "avatar_url" in room_data:
+                room.avatar_url = room_data["avatar_url"]
+            if "settings" in room_data:
+                room.settings = room_data["settings"]
 
             await session.commit()
             await session.refresh(room)
 
             return room
 
-        except IntegrityError as e:
-            await session.rollback()
-            raise ValueError(f"Failed to update room due to database error: {str(e)}")
         except Exception as e:
             await session.rollback()
-            raise ValueError(f"Unexpected error while updating room: {str(e)}")
+            logger.error(f"Error updating room: {str(e)}")
+            raise InternalServerError("Failed to update room due to database error")
 
     @staticmethod
     async def delete_room(

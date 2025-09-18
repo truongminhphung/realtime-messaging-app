@@ -144,46 +144,21 @@ async def get_room_details(
     return room
 
 
-@router.put("/{room_id}", response_model=ChatRoomGet)
+@router.patch("/{room_id}")
 async def update_room(
     room_id: UUIDType,
     room_data: ChatRoomUpdate,
     current_user: CurrentUser,
     session: AsyncSession = Depends(get_db),
-) -> ChatRoomGet:
+) -> None:
     """Update room details (only room creator can update)."""
-    try:
-        if room_data.name is not None:
-            if len(room_data.name.strip()) == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Room name cannot be empty",
-                )
-
-            if len(room_data.name.strip()) > 100:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Room name must be 100 characters or less",
-                )
-
-        updated_room = await RoomService.update_room(
-            session,
-            room_id,
-            current_user.user_id,
-            room_data.model_dump(exclude_unset=True),
-        )
-
-        if not updated_room:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Room not found"
-            )
-
-        return ChatRoomGet.model_validate(updated_room)
-
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
-    except HTTPException:
-        raise
+    _ = await RoomService.update_room(
+        session,
+        room_id,
+        current_user.user_id,
+        room_data.model_dump(exclude_unset=True),
+    )
+    return None
 
 
 @router.delete("/{room_id}", status_code=status.HTTP_204_NO_CONTENT)

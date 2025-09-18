@@ -42,6 +42,21 @@ class PublicRoomSummary(BaseModel):
     creator_username: str
 
 
+class RoomPreview(BaseModel):
+    """Detailed preview for join decision."""
+
+    room_id: uuid.UUID
+    name: str
+    description: str | None
+    creator_username: str
+    participant_count: int
+    max_participants: int | None
+    avatar_url: str | None
+    created_at: datetime
+    is_user_participant: bool
+    can_join: bool
+
+
 # Shared validation methods
 class ChatRoomValidators:
     @staticmethod

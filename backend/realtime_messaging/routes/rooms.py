@@ -118,14 +118,8 @@ async def get_room_details(
     Get detailed information about a specific room.
     Only participants can access the room details.
     """
-    try:
-        room = await RoomService.get_room_details(
-            session, room_id, current_user.user_id
-        )
-        return room
-
-    except Exception:
-        raise InternalServerError(detail="Failed to retrieve room details")
+    room = await RoomService.get_room_details(session, room_id, current_user.user_id)
+    return room
 
 
 @router.put("/{room_id}", response_model=ChatRoomGet)

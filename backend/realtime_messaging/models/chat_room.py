@@ -21,6 +21,14 @@ DEFAULT_ROOM_SETTINGS = {
 }
 
 
+class RoomWithDetails(BaseModel):
+    room_id: uuid.UUID
+    name: str
+    creator_id: uuid.UUID
+    created_at: str
+    participant_count: int
+
+
 class PublicRoomSummary(BaseModel):
     """Summary info for public room browsing."""
 

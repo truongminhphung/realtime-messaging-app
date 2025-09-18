@@ -15,12 +15,10 @@ from realtime_messaging.models.chat_room import (
     ChatRoom,
     ChatRoomCreate,
     PublicRoomSummary,
+    RoomWithDetails,
     RoomPreview,
 )
-from realtime_messaging.models.room_participant import (
-    RoomParticipant,
-    RoomParticipantGet,
-)
+from realtime_messaging.models.room_participant import RoomParticipant
 from realtime_messaging.models.user import User
 from realtime_messaging.models.notification import (
     Notification,
@@ -29,8 +27,13 @@ from realtime_messaging.models.notification import (
 )
 from realtime_messaging.services.user_service import UserService
 from realtime_messaging.config import settings
-from realtime_messaging.exceptions import InternalServerError
+from realtime_messaging.exceptions import (
+    InternalServerError,
+    NotFoundError,
+    ForbiddenError,
+)
 from .common import PaginationParams
+from realtime_messaging import messages as msg
 
 # Redis client for caching
 redis_client = redis.from_url(settings.redis_url)
@@ -90,6 +93,27 @@ class RoomService:
             await session.rollback()
             logger.error(f"IntegrityError while creating room: {str(e)}")
             raise InternalServerError("Failed to create room due to database error")
+
+    @staticmethod
+    async def get_room_details(
+        session: AsyncSession, room_id: UUIDType, user_id: UUIDType
+    ) -> RoomWithDetails:
+        """Get a room by ID."""
+        room = await RoomService.get_room(session, room_id)
+        if not room:
+            raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
+
+        # Check if user is a participant
+        is_participant = await RoomService.is_user_participant(
+            session, room_id, user_id
+        )
+        if not is_participant:
+            raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
+
+        room_details = await RoomService.get_room_with_participant_count(
+            session, room_id, room
+        )
+        return RoomWithDetails(**room_details)
 
     @staticmethod
     async def get_room(session: AsyncSession, room_id: UUIDType) -> Optional[ChatRoom]:

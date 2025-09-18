@@ -11,6 +11,7 @@ from realtime_messaging.models.chat_room import (
     ChatRoomGet,
     ChatRoomUpdate,
     PublicRoomSummary,
+    RoomWithDetails,
     RoomPreview,
 )
 from realtime_messaging.models.room_participant import RoomParticipantGet
@@ -48,14 +49,6 @@ class RoomParticipant(BaseModel):
     display_name: str | None
     profile_picture_url: str | None
     joined_at: str
-
-
-class RoomWithDetails(BaseModel):
-    room_id: UUIDType
-    name: str
-    creator_id: UUIDType
-    created_at: str
-    participant_count: int
 
 
 # Room CRUD endpoints
@@ -147,26 +140,8 @@ async def get_room_details(
     Get detailed information about a specific room.
     Only participants can access the room details.
     """
-    try:
-        room = await RoomService.get_room(session, room_id)
-        if not room:
-            raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
-
-        # Check if user is a participant
-        is_participant = await RoomService.is_user_participant(
-            session, room_id, current_user.user_id
-        )
-        if not is_participant:
-            raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
-
-        room_details = await RoomService.get_room_with_participant_count(
-            session, room_id, room
-        )
-
-        return RoomWithDetails(**room_details)
-
-    except Exception:
-        raise InternalServerError(detail="Failed to retrieve room details")
+    room = await RoomService.get_room_details(session, room_id, current_user.user_id)
+    return room
 
 
 @router.put("/{room_id}", response_model=ChatRoomGet)

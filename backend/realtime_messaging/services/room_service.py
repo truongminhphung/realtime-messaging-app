@@ -15,6 +15,7 @@ from realtime_messaging.models.chat_room import (
     ChatRoom,
     ChatRoomCreate,
     PublicRoomSummary,
+    RoomPreview,
 )
 from realtime_messaging.models.room_participant import (
     RoomParticipant,
@@ -175,6 +176,44 @@ class RoomService:
             )
 
         return public_room_summaries, total_count
+
+    @staticmethod
+    async def get_room_preview(
+        session: AsyncSession, room_id: UUIDType, user_id: UUIDType
+    ) -> Optional[RoomPreview]:
+        """Get a detailed preview of a room for join decision."""
+        room = await RoomService.get_room(session, room_id)
+        if not room:
+            return None
+
+        # Count participants
+        stmt = select(func.count(RoomParticipant.user_id)).where(
+            RoomParticipant.room_id == room_id
+        )
+        result = await session.execute(stmt)
+        participant_count = result.scalar() or 0
+
+        creator_name: User = await UserService.get_user_by_id(session, room.creator_id)
+
+        is_user_participant = await RoomService.is_user_participant(
+            session, room_id, user_id
+        )
+        can_join = not room.is_private and (
+            room.max_participants is None or participant_count < room.max_participants
+        )
+
+        return RoomPreview(
+            room_id=room.room_id,
+            name=room.name,
+            creator_username=creator_name.username if creator_name else "Unknown",
+            description=room.description,
+            avatar_url=room.avatar_url,
+            created_at=room.created_at,
+            participant_count=participant_count,
+            max_participants=room.max_participants,
+            is_user_participant=is_user_participant,
+            can_join=can_join,
+        )
 
     @staticmethod
     async def get_user_rooms(

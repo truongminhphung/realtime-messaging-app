@@ -20,11 +20,10 @@ on:
       - '.github/**'
   pull_request:
     branches: [ "main" ]
-    paths-ignore:
-      - '**/*.md'      # Ignore all markdown files
-      - '**/*.txt'     # Ignore all text files
-      - 'docs/**'      # Ignore docs directory
-      - '*.json'       # Ignore JSON files in root
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'worker/**'
   schedule:
     - cron: '25 7 * * 4'
 

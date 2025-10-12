@@ -1,4 +1,5 @@
 import api from './api';
+import { setToken, removeToken } from '../utils/token';
 
 /**
  * Authentication Service
@@ -33,7 +34,7 @@ const authService = {
       const response = await api.post('/auth/login', { email, password });
       // Store token and user info in localStorage if login is successful
       if (response.data.access_token) {
-        localStorage.setItem('access_token', response.data.access_token);
+        setToken(response.data.access_token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
       return response.data;
@@ -60,15 +61,13 @@ const authService = {
           }
         );
         // Clear local storage
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
+        removeToken();
 
         return { message: 'Logged out successfully' };
       }
     } catch (error) {
       // Still clear local storage even if logout API fails
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
+      removeToken();
       throw this._handleError(error);
     }
   },

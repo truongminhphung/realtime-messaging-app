@@ -1,4 +1,5 @@
 ERROR_NOT_PARTICIPANT = "You must be a participant to view room details"
 ERROR_ROOM_NOT_FOUND = "Room not found"
+ERROR_USER_NOT_FOUND = "User not found"
 FAILED_TO_RETRIEVE_PUBLIC_ROOMS = "Failed to retrieve public rooms"
 ERROR_ONLY_CREATOR_CAN_UPDATE = "Only room creator can update room details"

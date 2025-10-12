@@ -15,6 +15,9 @@ class NotificationType(enum.Enum):
     FRIEND_REQUEST = "friend_request"
     FRIEND_REQUEST_ACCEPTED = "friend_request_accepted"
 
+    def __str__(self):
+        return self.value
+
 
 class NotificationStatus(enum.Enum):
     PENDING = "pending"

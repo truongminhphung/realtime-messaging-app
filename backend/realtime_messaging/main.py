@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 
 from realtime_messaging.routes import (
     auth,
@@ -11,6 +11,7 @@ from realtime_messaging.routes import (
     notifications,
 )
 from realtime_messaging.websocket import chat
+from realtime_messaging.websocket import notification_routes
 from realtime_messaging.db.depends import sessionmanager
 from realtime_messaging.services.rabbitmq import startup_rabbitmq, shutdown_rabbitmq
 from .exceptions import configure_error_handlers
@@ -49,7 +50,17 @@ app.include_router(userprofiles.router)
 app.include_router(messages.router)
 app.include_router(rooms.router)
 app.include_router(notifications.router)
-app.include_router(chat.router)
+# app.include_router(chat.router)
+app.include_router(notification_routes.router)
+
+
+# Test WebSocket endpoint
+@app.websocket("/ws/test")
+async def websocket_test(websocket: WebSocket):
+    """Simple test WebSocket endpoint"""
+    await websocket.accept()
+    await websocket.send_text("Hello WebSocket!")
+    await websocket.close()
 
 
 @app.get("/", tags=["root"])

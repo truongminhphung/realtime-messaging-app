@@ -22,4 +22,5 @@ __all__ = [
     "rabbitmq",
     "redis",
     "database",
+    "email_service",
 ]

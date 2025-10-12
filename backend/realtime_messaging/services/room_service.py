@@ -3,6 +3,8 @@ from uuid import UUID as UUIDType
 import json
 import logging
 from fastapi import HTTPException, status
+import aio_pika
+from datetime import datetime, timezone
 
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -396,15 +398,15 @@ class RoomService:
             # Check if room exists and inviter is a participant
             room = await RoomService.get_room(session, room_id)
             if not room:
-                raise ValueError("Room not found")
+                raise NotFoundError(detail=msg.ERROR_ROOM_NOT_FOUND)
 
             if not await RoomService.is_user_participant(session, room_id, inviter_id):
-                raise ValueError("You must be a participant to invite others")
+                raise ForbiddenError(detail=msg.ERROR_NOT_PARTICIPANT)
 
             # Get invitee user by email
             invitee = await UserService.get_user_by_email(session, invitee_email)
             if not invitee:
-                raise ValueError("User not found")
+                raise NotFoundError(detail=msg.ERROR_USER_NOT_FOUND)
 
             # Check if invitee is already a participant
             if await RoomService.is_user_participant(session, room_id, invitee.user_id):
@@ -433,9 +435,24 @@ class RoomService:
 
             session.add(notification)
             await session.commit()
+            await session.refresh(notification)
+            logger.info(
+                f"Created invitation notification {notification.notification_id} for user {invitee.user_id}"
+            )
 
             # TODO: Publish to RabbitMQ for async processing
             # This would be implemented when we add the notification worker
+            await RoomService._publish_invitation_notification(
+                notification_id=notification.notification_id,
+                user_id=invitee.user_id,
+                room_id=room.room_id,
+                room_name=room.name,
+                inviter_id=inviter_id,
+                inviter_name=inviter.display_name if inviter else inviter.username,
+            )
+            logger.info(
+                f"Published invitation notification {notification.notification_id} to RabbitMQ"
+            )
 
             return True
 
@@ -444,6 +461,52 @@ class RoomService:
         except Exception as e:
             await session.rollback()
             raise ValueError(f"Failed to send invitation: {str(e)}")
+
+    @staticmethod
+    async def _publish_invitation_notification(
+        notification_id: UUIDType,
+        user_id: UUIDType,
+        room_id: UUIDType,
+        room_name: str,
+        inviter_id: UUIDType,
+        inviter_name: str,
+    ) -> None:
+        """Publish room invitation notification to RabbitMQ."""
+        try:
+            connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+            channel = await connection.channel()
+
+            # Declare exchange
+            exchange = await channel.declare_exchange(
+                name="notifications", type=aio_pika.ExchangeType.TOPIC, durable=True
+            )
+
+            message_body = {
+                "notification_id": str(notification_id),
+                "user_id": str(user_id),
+                "type": NotificationType.ROOM_INVITATION.value,  # ✅ Convert Enum to string
+                "data": {
+                    "room_id": str(room_id),
+                    "room_name": room_name,
+                    "inviter_id": str(inviter_id),
+                    "inviter_name": inviter_name,
+                },
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            # Create message
+            message = aio_pika.Message(
+                body=json.dumps(message_body).encode(),
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            )
+
+            await exchange.publish(message, routing_key="notification.room_invitation")
+            await connection.close()
+            logger.info(
+                f"Published invitation notification {notification_id} to RabbitMQ"
+            )
+        except Exception as e:
+            logger.error(f"Failed to publish invitation notification: {str(e)}")
+            # Don't raise - notification is saved in DB, can be retried
 
     @staticmethod
     async def get_room_with_participant_count(

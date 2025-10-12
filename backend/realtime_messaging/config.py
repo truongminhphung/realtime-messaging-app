@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = (
         60  # Default expiration time for access tokens
     )
+    frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # Optional: Different configs for different environments
     environment: str = os.getenv("ENVIRONMENT", "development")

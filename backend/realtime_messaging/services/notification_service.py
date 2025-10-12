@@ -3,6 +3,8 @@ from uuid import UUID as UUIDType
 import json
 import logging
 from datetime import datetime
+import aio_pika
+import aio_pika.abc
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc, func, update, delete
@@ -15,6 +17,7 @@ from realtime_messaging.models.notification import (
     NotificationType,
     NotificationStatus,
 )
+from realtime_messaging.models.chat_room import ChatRoom
 from realtime_messaging.models.user import User
 from realtime_messaging.config import settings
 
@@ -154,6 +157,81 @@ class NotificationService:
 
         except Exception as e:
             logger.error(f"Error getting notification count: {e}")
+            raise
+
+    @staticmethod
+    async def send_room_invitation_notification(
+        session: AsyncSession, inviter_id: UUIDType, invitee: User, room: ChatRoom
+    ):
+        """Create notification and publish to queue for async processing."""
+        try:
+            # Create notification content
+            content = {
+                "inviter_id": str(inviter_id),
+                "room_id": str(room.room_id),
+                "room_name": room.name,
+                "invitee_email": invitee.email,
+            }
+            notification = Notification(
+                user_id=invitee.user_id,
+                type=NotificationType.ROOM_INVITATION,
+                content=json.dumps(content),
+                status=NotificationStatus.PENDING,
+            )
+            session.add(notification)
+            await session.commit()
+            await session.refresh(notification)
+
+            # TODO: Publish to RabbitMQ for async processing
+            await NotificationService._publish_notification_event(
+                notification_id=notification.notification_id,
+                user_id=invitee.user_id,
+                notification_type=NotificationType.ROOM_INVITATION,
+                content=content,
+            )
+            return notification
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"Error sending room invitation notification: {e}")
+            raise
+
+    @staticmethod
+    async def _publish_notification_event(
+        notification_id: UUIDType,
+        user_id: UUIDType,
+        notification_type: NotificationType,
+        content: Dict[str, Any],
+    ):
+        """Publish notification event to RabbitMQ."""
+        try:
+            connection: aio_pika.abc.AbstractRobustConnection = (
+                await aio_pika.connect_robust(settings.rabbitmq_url)
+            )
+            channel: aio_pika.abc.AbstractRobustChannel = await connection.channel()
+
+            # Declare exchange and queue
+            exchange = await channel.declare_exchange(
+                "notifications", aio_pika.ExchangeType.TOPIC, durable=True
+            )
+
+            message_body = {
+                "notification_id": str(notification_id),
+                "user_id": str(user_id),
+                "type": notification_type,
+                "content": content,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            message = aio_pika.Message(
+                body=json.dumps(message_body).encode(),
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            )
+
+            # Publish with routing key for different notification types
+            routing_key = f"notification.{notification_type}"
+            await exchange.publish(message=message, routing_key=routing_key)
+            await connection.close()
+        except Exception as e:
+            logger.error(f"Error publishing notification event: {e}")
             raise
 
     @staticmethod

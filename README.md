@@ -98,6 +98,9 @@ realtime-messaging-app/
 # Navigate to backend directory
 cd backend
 
+# When adding new dependencies in pyproject.toml, run the following command to install them
+uv sync
+
 # Install dependencies using uv
 uv sync --extra dev
 

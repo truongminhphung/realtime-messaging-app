@@ -1,6 +1,6 @@
 from typing import AsyncGenerator, Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, WebSocket, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 

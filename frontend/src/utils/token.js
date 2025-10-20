@@ -1,4 +1,4 @@
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 /**
  * Token Utility
@@ -91,7 +91,7 @@ export const getUserFromToken = (token = null) => {
       email: decoded.email,
       username: decoded.username,
       displayName: decoded.display_name,
-    //   exp: decoded.exp,
+      //   exp: decoded.exp,
     };
   } catch (error) {
     console.error('Error extracting user from token:', error);

@@ -2,7 +2,6 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import authService from '../services/authService';
 import {
-  //   setToken,
   getToken,
   removeToken,
   isTokenExpired,
@@ -43,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Token exists and is valid
-      const user = await getUserFromToken(token);
+      const user = getUserFromToken(token);
       setUser(user);
       setIsAuthenticated(true);
     } catch (err) {

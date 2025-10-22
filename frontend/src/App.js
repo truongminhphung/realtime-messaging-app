@@ -1,11 +1,14 @@
 import React from 'react';
-import TestApp from './TestApp';
+import { AuthProvider } from './contexts/AuthContext';
+import ChatRoom from './components/ChatRoom';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <TestApp />
+      <AuthProvider>
+        <ChatRoom />
+      </AuthProvider>
     </div>
   );
 }

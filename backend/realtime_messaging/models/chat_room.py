@@ -242,6 +242,7 @@ class ChatRoom(Base):
         index=True,
     )
     is_private: bool = Column(Boolean, nullable=False, default=False)
+    is_direct_message : bool = Column(Boolean, nullable=False, default=False, index=True)
     max_participants: int | None = Column(Integer, nullable=True)
     avatar_url: str | None = Column(String(500), nullable=True)
     settings: Dict[str, Any] | None = Column(JSONB, nullable=True)

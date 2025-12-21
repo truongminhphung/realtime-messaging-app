@@ -13,9 +13,9 @@ export const AuthContext = createContext(null);
 
 // AuthProvider component to wrap around the app
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null); // current user data
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // login status
+  const [isLoading, setIsLoading] = useState(true); // loading state
   const [error, setError] = useState(null);
 
   const checkAuth = useCallback(async () => {
@@ -62,13 +62,14 @@ export const AuthProvider = ({ children }) => {
 
       const response = await authService.login(email, password);
 
-      const userData = getUserFromToken(response.data.access_token);
+      const userData = getUserFromToken(response.access_token);
       setUser(userData);
       setIsAuthenticated(true);
 
       return response;
     } catch (err) {
-      setError(err);
+      const errorMessage = err?.detail || err?.message || 'Login failed';
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
@@ -83,7 +84,8 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(userData);
       return response;
     } catch (err) {
-      setError(err);
+      const errorMessage = err?.detail || err?.message || 'Registration failed';
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
@@ -95,11 +97,22 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       setError(null);
 
-      await authService.logout();
+      const token = getToken();
+      if (token) {
+        await authService.logout(token);
+      }
+
+      removeToken();
       setUser(null);
       setIsAuthenticated(false);
     } catch (err) {
-      setError(err);
+      // Always clear client-side data even if backend logout fails
+      removeToken();
+      setUser(null);
+      setIsAuthenticated(false);
+
+      const errorMessage = err?.detail || err?.message || 'Logout failed';
+      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);

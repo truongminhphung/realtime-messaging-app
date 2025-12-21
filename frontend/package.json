@@ -26,6 +26,11 @@
     "lint:fix": "eslint --fix",
     "format": "prettier --write"
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "node_modules/(?!axios)"
+    ]
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

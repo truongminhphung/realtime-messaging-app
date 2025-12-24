@@ -9,6 +9,7 @@ from realtime_messaging.routes import (
     messages,
     rooms,
     notifications,
+    direct_messages,
 )
 from realtime_messaging.websocket import chat
 from realtime_messaging.websocket import notification_routes
@@ -48,6 +49,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(userprofiles.router)
 app.include_router(messages.router)
+app.include_router(direct_messages.router)
 app.include_router(rooms.router)
 app.include_router(notifications.router)
 # app.include_router(chat.router)
@@ -58,8 +60,9 @@ app.add_middleware(
     allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
+
 
 # Test WebSocket endpoint
 @app.websocket("/ws/test")

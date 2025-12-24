@@ -23,4 +23,5 @@ __all__ = [
     "redis",
     "database",
     "email_service",
+    "direct_message_service",
 ]

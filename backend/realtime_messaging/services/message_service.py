@@ -2,22 +2,18 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID as UUIDType
 import json
 import logging
-from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, desc
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import selectinload
 import redis.asyncio as redis
 
 from realtime_messaging.models.message import (
     Message,
     MessageCreateInternal,
-    MessageGet,
     MessageWithSenderInfo,
 )
 from realtime_messaging.models.user import User
-from realtime_messaging.models.chat_room import ChatRoom
 from realtime_messaging.services.room_service import RoomService
 from realtime_messaging.config import settings
 
@@ -70,11 +66,11 @@ class MessageService:
         session: AsyncSession,
         room_id: UUIDType,
         limit: int = RECENT_MESSAGES_LIMIT,
+        offset: int = 0,
         use_cache: bool = True,
     ) -> List[MessageWithSenderInfo]:
         """Get recent messages for a room with sender information."""
-        cache_key = f"room_messages:{room_id}:{limit}"
-
+        cache_key = f"room_messages:{room_id}:{limit}:{offset}"
         # Try to get from cache first
         if use_cache:
             cached = await redis_client.get(cache_key)
@@ -92,6 +88,7 @@ class MessageService:
             .where(Message.room_id == room_id)
             .order_by(desc(Message.created_at))
             .limit(limit)
+            .offset(offset)
         )
 
         result = await session.execute(stmt)
@@ -104,7 +101,7 @@ class MessageService:
                 sender_id=message.sender_id,
                 sender_username=user.username,
                 sender_display_name=user.display_name,
-                sender_profile_picture_url=user.profile_picture_url,
+                # sender_profile_picture_url=user.profile_picture_url,
                 content=message.content,
                 created_at=message.created_at,
             )

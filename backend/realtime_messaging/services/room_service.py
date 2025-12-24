@@ -74,6 +74,7 @@ class RoomService:
                     room_data.description.strip() if room_data.description else None
                 ),
                 is_private=room_data.is_private,
+                is_direct_message=room_data.is_direct_message,
                 max_participants=room_data.max_participants,
                 avatar_url=room_data.avatar_url,
                 settings=room_data.settings or {},
